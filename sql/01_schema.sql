@@ -59,27 +59,20 @@ CREATE TABLE glosa (
 );
 
 -- ---------------------------------------------------------------------
--- SENA  (LENGUA "Clasifica" SENA, 1:N)
--- id_tipo: el diagrama lo marca como FK hacia TIPO_SEÑA, pero la PK de
--- TIPO_SEÑA es compuesta (id_tipo_sena, id_sena), por lo que id_tipo
--- por sí solo no puede referenciarla. Se deja como columna sin
--- restricción FK (ver README, sección "Diferencias con el diagrama").
+-- TIPO_SEÑA  (catálogo: TIPO_SEÑA 1:N SENA)
 -- ---------------------------------------------------------------------
-CREATE TABLE sena (
-    id_sena    INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_tipo    INTEGER,
-    id_lengua  INTEGER NOT NULL REFERENCES lengua (id_lengua)
+CREATE TABLE tipo_sena (
+    id_tipo_sena  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    tipo          VARCHAR(100) NOT NULL UNIQUE
 );
 
 -- ---------------------------------------------------------------------
--- TIPO_SEÑA  (SENA 1:N TIPO_SEÑA)
--- PK compuesta tal como aparece en el diagrama (dos columnas PK).
+-- SENA  (LENGUA "Clasifica" SENA, 1:N; TIPO_SEÑA 1:N SENA)
 -- ---------------------------------------------------------------------
-CREATE TABLE tipo_sena (
-    id_tipo_sena  INTEGER NOT NULL,
-    id_sena       INTEGER NOT NULL REFERENCES sena (id_sena) ON DELETE CASCADE,
-    tipo          VARCHAR(100) NOT NULL,
-    PRIMARY KEY (id_tipo_sena, id_sena)
+CREATE TABLE sena (
+    id_sena    INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_tipo    INTEGER REFERENCES tipo_sena (id_tipo_sena),
+    id_lengua  INTEGER NOT NULL REFERENCES lengua (id_lengua)
 );
 
 -- ---------------------------------------------------------------------
@@ -169,7 +162,7 @@ CREATE INDEX idx_definicion_lengua        ON definicion (id_lengua);
 CREATE INDEX idx_palabra_lengua           ON palabra (id_lengua);
 CREATE INDEX idx_glosa_lengua             ON glosa (id_lengua);
 CREATE INDEX idx_sena_lengua              ON sena (id_lengua);
-CREATE INDEX idx_tipo_sena_sena           ON tipo_sena (id_sena);
+CREATE INDEX idx_sena_tipo                ON sena (id_tipo);
 CREATE INDEX idx_video_senante            ON video (id_senante);
 CREATE INDEX idx_sena_definicion_def      ON sena_definicion (id_definicion);
 CREATE INDEX idx_sena_palabra_palabra     ON sena_palabra (id_palabra);

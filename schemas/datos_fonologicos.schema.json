@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ChristopherArgenis/LSM_DB/schemas/datos_fonologicos.schema.json",
+  "title": "datos_fonologicos",
+  "description": "Contenido de sena_diccionario.datos_fonologicos: descripción de una seña según un diccionario. Debe coincidir con la función lsm.valida_datos_fonologicos de sql/01_schema.sql.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["codigo", "significado", "tipo_sena", "configuracion", "ubicacion"],
+  "properties": {
+    "codigo": {
+      "type": "string", "minLength": 1,
+      "description": "Código de la seña en el diccionario. Ej.: \"B-P 3\"."
+    },
+    "significado": {
+      "type": "string", "minLength": 1,
+      "description": "Significado de la seña según el diccionario, tal como aparece. '/' separa acepciones numeradas, '–' sinónimos, '(A)' variantes. Ej.: \"Abrir 1 / Abierto, ta 2 (A)\"."
+    },
+    "tipo_sena": {
+      "type": "string", "minLength": 1,
+      "description": "Tipo de seña como lo escribe el diccionario: SM, SB, SS o SC con sus partes. Ej.: \"SC: I. SM; II. SB\". El tipo principal también se guarda en sena.id_tipo."
+    },
+    "configuracion": {
+      "type": "string", "minLength": 1,
+      "description": "Configuración manual (forma de la mano), con los códigos del diccionario. Ej.: \"I. B-P.2; II. MD y MB 1.1\"."
+    },
+    "orientacion": {
+      "type": "string", "minLength": 1,
+      "description": "Orientación de la(s) palma(s). Ej.: \"I. y II. Palmas hacia adentro.\"."
+    },
+    "ubicacion": {
+      "type": "string", "minLength": 1,
+      "description": "Lugar del cuerpo o del espacio donde se articula la seña."
+    },
+    "movimiento": {
+      "type": "string", "minLength": 1,
+      "description": "Movimiento de la(s) mano(s)."
+    },
+    "rasgos_no_manuales": {
+      "type": "string", "minLength": 1,
+      "description": "Expresión facial, cabeza, cuerpo. Ej.: \"Cejas hacia arriba.\"."
+    },
+    "representacion": {
+      "type": "string", "minLength": 1,
+      "description": "Qué representa o imita la seña (origen icónico)."
+    },
+    "definicion": {
+      "type": "string", "minLength": 1,
+      "description": "Definición tal como la da el diccionario. También se guarda en la tabla definicion."
+    },
+    "nota_cultural": {
+      "type": "string", "minLength": 1,
+      "description": "Nota sobre el uso cultural de la seña."
+    },
+    "pagina": {
+      "type": "integer", "minimum": 1,
+      "description": "Página del PDF del diccionario donde aparece la seña."
+    }
+  }
+}

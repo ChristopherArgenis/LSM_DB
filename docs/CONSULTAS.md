@@ -1,9 +1,10 @@
 # Limitaciones y consultas posibles
 
-Este documento explica qué se puede y qué no se puede consultar con el esquema actual.
-El SQL de cada consulta está en [`sql/03_consultas.sql`](../sql/03_consultas.sql), con el mismo código (A1, A2, …).
-Los bloques A–J se probaron con los datos inventados de [`sql/datos_prueba.sql`](../sql/datos_prueba.sql) (hola/hello, ASL…).
-El bloque K se probó con el diccionario real ([`sql/02_datos_dlsm_cdmx.sql`](../sql/02_datos_dlsm_cdmx.sql)).
+Qué se puede y qué no se puede consultar con el esquema actual, cargado con el
+Diccionario LSM CDMX 2017 (1,006 señas).
+
+- SQL de cada consulta: [`sql/03_consultas.sql`](../sql/03_consultas.sql) (códigos A1, A2, …).
+- Resultados de cada consulta: [`docs/SALIDAS.md`](SALIDAS.md).
 
 ## Idea clave: la SEÑA es el pivote
 
@@ -18,13 +19,13 @@ glosa ────┘   sena_glosa      │
                                         └── sena_video ── video ── senante
 ```
 
-Por eso funciona la consulta que comprobaste:
+Por esa ruta funciona la consulta que comprobaste:
 
 > *"Soy americano, sé que en español se dice 'hola' y quiero su definición en inglés."*
-> `palabra 'hola' (Español) → sena_palabra → sena → sena_definicion → definicion (Inglés)`
-> Resultado: *"Used as a greeting when meeting someone."* (consulta **A4**)
+> `palabra 'hola' (Español) → sena_palabra → sena → sena_definicion → definicion (Inglés)` (consulta **A4**)
 
-Y también explica casi todas las limitaciones: si algo no tiene seña, queda aislado.
+Hoy A4 sale vacía porque solo hay definiciones en español. La misma ruta en español (A5) sí devuelve resultados.
+En cuanto se carguen definiciones en inglés ligadas a las mismas señas, A4 funciona sin cambiar nada.
 
 ---
 
@@ -32,171 +33,175 @@ Y también explica casi todas las limitaciones: si algo no tiene seña, queda ai
 
 ### 1.1 Todo depende de que exista una seña
 
-| No se puede… | Por qué | Ejemplo en los datos |
-|---|---|---|
-| Obtener la definición o traducción de una palabra que no tiene seña | `palabra` y `definicion` no se relacionan entre sí; solo con `sena` | `perro` no tiene seña → no hay traducción ni definición |
-| Saber a qué palabra corresponde una definición | La definición se liga a la seña, no a la palabra | En la seña CASA hay *casa* y *vivienda*; la definición es de la seña, no de una palabra |
-| Traducir palabras entre idiomas hablados sin pasar por una seña | No hay tabla palabra↔palabra | Útil para un diccionario de señas, pero no es un diccionario bilingüe |
+| No se puede… | Por qué |
+|---|---|
+| Obtener la definición o traducción de una palabra que no tiene seña | `palabra` y `definicion` no se relacionan entre sí; solo con `sena` |
+| Saber a qué palabra corresponde una definición | La definición se liga a la seña, no a la palabra. La seña 5-G 51 tiene *Bonito, Bello, Lindo, Belleza* y una sola definición |
+| Traducir palabras entre idiomas hablados sin pasar por una seña | No hay tabla palabra↔palabra |
 
 ### 1.2 Sentidos y ambigüedad
 
-- **Polisemia sin control:** si una palabra tiene varias señas, A4 devuelve **todas** las definiciones (`banco` → *bank* y *bench*). La única forma de distinguir el sentido es la glosa (`BANCO-DINERO`, `BANCO-ASIENTO`), y eso depende de cómo se escriba.
-- **Si una seña tiene varias definiciones en el mismo idioma**, no hay forma de numerar acepciones (1ª, 2ª…) ni de decir cuál traduce a cuál en otro idioma.
-- **Variante regional vs. seña distinta:** dos señas LSM con la misma palabra pueden ser variantes regionales o significados diferentes. El esquema no lo distingue.
+- **Polisemia sin control:** si una palabra tiene varias señas, se obtienen todas sus definiciones mezcladas. *Abandonar* tiene 6 señas (A6).
+- **Acepciones juntas:** el diccionario da varias acepciones en un solo texto (`1. adv. … 2. adv. …`) y se guardan en una sola fila. No se puede decir qué acepción corresponde a qué palabra.
+- **Variante regional o seña distinta:** *Casa (A)* y *Casa (B)* son dos señas para la misma palabra. La letra de variante solo vive en el texto de `significado`; el esquema no distingue variante de sentido distinto.
 
 ### 1.3 Información que no existe en el esquema
 
 | No se puede consultar… | Qué faltaría |
 |---|---|
 | Variantes por región / estado / comunidad | Campo `region` en `sena`, `senante` o `video` |
-| Sinónimos, variantes o componentes **entre señas** (p. ej. señas compuestas) | Tabla `sena_relacion (id_sena_a, id_sena_b, tipo)`. Existe el tipo "compuesta", pero no se puede decir de qué señas se compone |
-| Equivalencia directa LSM ↔ ASL | Hoy solo se infiere si ambas señas comparten una palabra (B1) |
-| Lengua de un diccionario, año, editorial | `diccionario` solo tiene `completo` y `autor` |
-| Qué diccionario dio una definición | `definicion` no se liga a `diccionario` |
-| Ejemplos de uso, oraciones, categoría gramatical | No hay tablas ni campos para ello |
+| Sinónimos, variantes o componentes **entre señas** | Tabla `sena_relacion (id_sena_a, id_sena_b, tipo)`. Existe el tipo SC (compuesta), pero no se puede decir de qué señas se compone |
+| Equivalencia directa LSM ↔ ASL | Hoy solo se deduciría si ambas señas comparten una palabra (B1) |
+| Lengua, año o equipo completo de un diccionario | `diccionario` solo tiene `completo` y `autor` |
+| Qué diccionario dio una definición | `definicion` no se liga a `diccionario` (se usa el campo `autor`) |
+| Ejemplos de uso u oraciones | No hay tablas ni campos para ello |
+| Categoría gramatical | Solo se puede deducir del inicio de la definición (`sust.`, `v.`, … en K5) |
 | Nombre, sexo, región o lengua materna del señante | `senante` solo tiene `edad` y `perfil_nativo` (texto libre) |
-| Edad del señante **cuando grabó** | `edad` es fija; haría falta fecha de nacimiento |
-| En qué segundo de un video aparece cada seña | `sena_video` no tiene tiempo de inicio/fin (el video de frase solo dice "contiene HOLA y CASA") |
-| Duración, resolución o calidad del video | No hay campos |
+| Qué persona modeló cada seña en el diccionario | No hay relación seña ↔ señante; solo video ↔ señante |
+| En qué segundo de un video aparece cada seña | `sena_video` no tiene tiempo de inicio/fin |
 | Historial de cambios / quién capturó qué | Solo `glosa` y `definicion` tienen `autor` y `fecha` |
-| Más de un tipo por seña | `sena.id_tipo` es un solo valor |
+| Más de un tipo por seña | `sena.id_tipo` es un solo valor (las partes de una compuesta solo están en el JSON) |
 
 ### 1.4 Dependencias del diccionario
 
-- Los **datos fonológicos** están en `sena_diccionario`, no en `sena`. Una seña que no está en ningún diccionario **no tiene fonología** (en los datos: HOUSE y HELLO de ASL).
-- Los **videos** se ligan a `sena_diccionario`, no a `sena`. Una seña que no está en un diccionario **no puede tener video**. Un video de corpus libre (sin diccionario) solo puede quedar sin etiquetar.
+- Los **datos fonológicos** están en `sena_diccionario`, no en `sena`. Una seña que no está en ningún diccionario no tiene fonología.
+- Los **videos** se ligan a `sena_diccionario`, no a `sena`. Una seña que no está en un diccionario no puede tener video.
 
-### 1.5 Con el diccionario real (LSM CDMX 2017)
+### 1.5 Lo que el Diccionario CDMX no trae
 
-- **No hay glosas.** El diccionario no las trae, así que las consultas A–J que usan `glosa` salen vacías. La seña se identifica por `codigo` y `significado` del JSON (bloque K).
-- **Solo hay español.** Para que funcione A4 (definición en inglés) hace falta cargar palabras y definiciones en inglés y ligarlas a las mismas señas.
-- **Los parámetros fonológicos son texto libre** (`"La MD se mueve formando un arco."`). Se puede buscar por texto (`ILIKE '%arco%'`), pero no comparar parámetro por parámetro como en D1 y D5. Para eso habría que codificarlos (p. ej. `"configuracion": "B-P.6"`).
-- **Las acepciones van juntas** en una sola definición (`1. adv. … 2. adv. …`). No se puede saber qué acepción corresponde a qué palabra del significado.
-- **Variantes `(A)`/`(B)`**: la palabra queda ligada a varias señas, pero la letra de variante solo está en el texto de `significado`.
+- **Glosas:** la seña se identifica por `codigo` y `significado` del JSON.
+- **Otros idiomas:** solo hay español, así que A3 y A4 salen vacías.
+- **Videos y señantes:** el bloque F sale vacío.
+- **Un segundo diccionario:** la comparación entre diccionarios (C4) sale vacía.
+- **Parámetros fonológicos codificados:** la configuración sí usa códigos cortos (`A.1`, `B-P.2`) y se puede comparar exacta (D1, D2). Ubicación, movimiento y orientación son descripciones libres, así que los pares mínimos (D7) son una aproximación.
 
 ### 1.6 Integridad que el esquema no garantiza
 
-Son cosas que se pueden capturar mal sin que PostgreSQL lo impida (las consultas del bloque **I** las detectan):
+Cosas que se pueden capturar mal sin que PostgreSQL lo impida (el bloque **I** las detecta):
 
-- `sena_diccionario.id_lengua` puede ser distinta de `sena.id_lengua` (dato redundante) → **I1**
-- Una glosa de ASL se puede ligar a una seña LSM → **I2**
-- La misma palabra se puede capturar dos veces en la misma lengua → **I3**
-- ~~`datos_fonologicos` no tiene estructura fija~~ → **resuelto**: ahora PostgreSQL valida el JSON (ver [DATOS_FONOLOGICOS.md](DATOS_FONOLOGICOS.md))
+- Códigos repetidos en el JSON (`C-84` aparece dos veces) → **I1**
+- `sena_diccionario.id_lengua` distinta de `sena.id_lengua` → **I3**
+- La misma palabra capturada dos veces → **I4**
 - `modalidad`, `perfil_nativo`, `mano_dominante`, `tipo_de_toma` son texto libre ("derecha", "Derecha", "der")
+- ~~`datos_fonologicos` sin estructura fija~~ → resuelto: PostgreSQL valida el JSON ([DATOS_FONOLOGICOS.md](DATOS_FONOLOGICOS.md))
 
 ---
 
-## 2. Consultas posibles
+## 2. Consultas
+
+`[VACÍA HOY]` = la base todavía no tiene esa información. `[CONTROL]` = revisión de calidad; vacía significa sin problemas.
 
 ### A. Palabras, traducción y definiciones
-| Código | Pregunta | Ruta |
-|---|---|---|
-| A1 | ¿Qué seña(s) tiene la palabra *hola*? | palabra → seña → glosa |
-| A2 | ¿Qué palabras (en todos los idiomas) corresponden a la glosa CASA? | glosa → seña → palabra |
-| A3 | ¿Cómo se dice *banco* en inglés? | palabra es → seña → palabra en |
-| **A4** | **Definición en inglés de la palabra en español *hola*** | palabra es → seña → definición en |
-| A5 | Todas las definiciones de una seña, por idioma | glosa → seña → definición |
-| A6 | Palabras polisémicas (una palabra, varias señas) | palabra → seña (conteo) |
-| A7 | Sinónimos: palabras del mismo idioma que comparten seña (*casa / vivienda*) | seña → palabra (agrupado) |
-
-### B. Entre lenguas de señas
 | Código | Pregunta |
 |---|---|
-| B1 | Equivalente ASL de una seña LSM (por palabra compartida) |
-| B2 | Número de señas por lengua de señas |
+| A1 | ¿Qué seña(s) tiene la palabra *Casa*? |
+| A2 | ¿Qué palabras tiene la seña 5-G 51? |
+| A3 | `[VACÍA HOY]` ¿Cómo se dice *Casa* en inglés? |
+| **A4** | `[VACÍA HOY]` **Definición en inglés de una palabra en español** |
+| A5 | Definición en español de *Banco* |
+| A6 | Palabras con varias señas (variantes o sentidos distintos) |
+| A7 | Sinónimos: palabras que comparten seña (*Auto / Automóvil / Carro / Coche*) |
+
+### B. Lenguas
+| Código | Pregunta |
+|---|---|
+| B1 | `[VACÍA HOY]` Equivalente en otra lengua de señas |
+| B2 | Señas por lengua de señas |
 | B3 | Palabras, glosas y definiciones por lengua |
 
 ### C. Diccionarios
 | Código | Pregunta |
 |---|---|
-| C1 | Contenido de un diccionario (glosa + palabras) |
-| C2 | Número de señas por diccionario |
-| C3 | ¿En qué diccionarios aparece la seña HOLA? |
-| C4 | Señas que están en el diccionario A pero no en el B |
-| C5 | Señas presentes en 2 o más diccionarios |
-| C6 | Misma seña con datos fonológicos distintos según el diccionario |
-| C7 | Qué parámetro exacto cambia entre diccionarios (CASA: orientación) |
+| C1 | Datos del diccionario |
+| C2 | Señas por diccionario |
+| C3 | Contenido por página del PDF |
+| C4 | `[VACÍA HOY]` Diferencias de una seña entre diccionarios |
+| C5 | Señas por grupo de configuración (B-P, 5-G, A, L, S, C, O) |
+| C6 | Buscar una seña por código (JSON completo) |
 
-### D. Fonología (`datos_fonologicos`)
+### D. Fonología
 | Código | Pregunta |
 |---|---|
-| D1 | Señas con configuración de mano "B" |
-| D2 | Búsqueda combinada (ubicación = barbilla **y** movimiento = toque repetido) |
-| D3 | Señas con un rasgo no manual (texto que contiene "sonrisa") |
-| D4 | Frecuencia de cada configuración |
-| D5 | Pares mínimos: señas que difieren en un solo parámetro (AGUA / MAMÁ) |
-| D6 | Qué claves se usan en el JSON (control de calidad) |
+| D1 | Señas con configuración exacta `B-P.2` |
+| D2 | Configuración `A.1` **y** ubicación "A la altura del pecho." |
+| D3 | Configuraciones que contienen `B-P.2` (incluye compuestas y bimanuales) |
+| D4 | Rasgos no manuales que mencionan las cejas |
+| D5 | Frecuencia de cada configuración |
+| D6 | Frecuencia de cada ubicación |
+| D7 | Pares mínimos (aproximación) |
+| D8 | Cobertura de cada campo del JSON |
 
 ### E. Tipo de seña
 | Código | Pregunta |
 |---|---|
-| E1 | Número de señas por tipo |
-| E2 | Señas de un tipo dado |
+| E1 | Señas por tipo (SM, SB, SS, SC) |
+| E2 | Señas compuestas y sus partes |
+| E3 | Combinaciones de partes en las compuestas |
 
-### F. Videos y señantes
+### F. Videos y señantes (todas `[VACÍA HOY]`)
 | Código | Pregunta |
 |---|---|
-| F1 | Videos de una seña, con señante y diccionario |
-| F2 | Video de una palabra en español (palabra → seña → video) |
-| F3 | Señas contenidas en un video |
-| F4 | Videos y señas distintas por señante |
-| F5 | Señas grabadas por 2+ señantes (para estudiar variación) |
-| F6 | Videos por mano dominante y tipo de toma (con subtotales) |
-| F7 | Videos por perfil de señante y rango de edad |
-| F8 | Videos en un rango de fechas |
+| F1 | Videos de una seña y su señante |
+| F2 | Video de una palabra |
+| F3 | Videos y señas por señante |
+| F4 | Señas grabadas por varios señantes |
+| F5 | Videos por mano dominante y tipo de toma |
 
-### G. Autoría y fechas
+### G. Autoría
 | Código | Pregunta |
 |---|---|
-| G1 | Glosas y definiciones por autor |
-| G2 | Lo capturado en un periodo |
+| G1 | Definiciones y glosas por autor |
 
-### H. Cobertura (qué falta)
+### H. Cobertura
 | Código | Pregunta |
 |---|---|
-| H1 | Palabras sin seña |
-| H2 | Señas a las que les falta glosa, palabra, definición, diccionario o tipo |
-| H3 | Señas sin definición en un idioma dado |
-| H4 | Entradas de diccionario sin video |
-| H5 | Videos sin seña y señantes sin videos |
-| H6 | Definiciones y glosas no ligadas a ninguna seña |
+| H1 | Resumen: cuántas señas tienen palabra, definición, glosa, diccionario, video, tipo |
+| H2 | Señas sin tipo |
+| H3 | Señas sin movimiento u orientación |
+| H4 | `[CONTROL]` Palabras sin seña |
 
-### I. Consistencia
+### I. Consistencia (todas `[CONTROL]`)
 | Código | Pregunta |
 |---|---|
-| I1 | Lengua de la entrada de diccionario ≠ lengua de la seña |
-| I2 | Glosa de otra lengua ligada a una seña |
-| I3 | Palabras duplicadas |
-| I4 | Señas con más de una glosa |
+| I1 | Códigos repetidos |
+| I2 | Significados repetidos |
+| I3 | Lengua de la entrada distinta de la de la seña |
+| I4 | Palabras duplicadas |
+| I5 | Tipo en `sena` distinto del tipo en el JSON |
 
 ### J. Ficha completa
 | Código | Pregunta |
 |---|---|
-| J1 | Todo lo que se sabe de una seña en una fila: lengua, tipo, glosas, palabras, definiciones por idioma, diccionarios y número de videos |
+| J1 | Todo sobre una seña en una fila: palabras, definición, tipo, configuración, ubicación, movimiento |
 
-### K. Diccionario LSM CDMX 2017 (datos reales)
+### K. Temas del diccionario
 | Código | Pregunta |
 |---|---|
-| K1 | Buscar una palabra y ver su seña: código, tipo, configuración, ubicación, movimiento |
-| K2 | Buscar por código del diccionario (`B-P 3`) |
-| K3 | Palabras con varias señas (variantes A/B o sentidos distintos) |
-| K4 | Sinónimos: palabras que comparten seña |
-| K5 | Señas por tipo (SM, SB, SS, SC) |
-| K6 | Señas compuestas con el detalle de cada parte |
-| K7 | Señas por grupo de configuración (prefijo del código) |
-| K8 | Búsqueda de texto en un parámetro (configuración `B-P.2`) |
-| K9 | Rasgos no manuales que mencionan las cejas |
-| K10 | Señas con nota cultural o representación |
-| K11 | Señas de lugares (STC Metro, señas internacionales) |
-| K12 | Definición en español de una palabra |
-| K13 | Cobertura de cada campo opcional del JSON |
+| K1 | Señas con nota cultural |
+| K2 | Señas con representación (qué imitan) |
+| K3 | Estaciones del Metro |
+| K4 | Señas de lugares internacionales |
+| K5 | Señas por categoría gramatical |
+| K6 | Búsqueda libre en las definiciones |
 
 ---
 
 ## 3. Cómo ejecutarlas
 
+Todas, con sus resultados en `docs/SALIDAS.md`:
+
+```bash
+python3 scripts/generar_salidas.py
+```
+
+Solo algunas, en pantalla:
+
+```bash
+python3 scripts/generar_salidas.py A1 D7
+```
+
+Directo en PostgreSQL:
+
 ```bash
 psql -d lsm_db -f sql/03_consultas.sql
 ```
-
-O copia una consulta suelta y cambia el valor de ejemplo (`'hola'`, `'Inglés'`, `'B'`, …).

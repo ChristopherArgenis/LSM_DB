@@ -133,6 +133,37 @@ CREATE TABLE sena_glosa (
     UNIQUE (id_sena, id_glosa)
 );
 
+-- ---------------------------------------------------------------------
+-- Validación de datos_fonologicos (JSONB)
+-- Misma definición que schemas/datos_fonologicos.schema.json y
+-- docs/DATOS_FONOLOGICOS.md. Si cambias una, cambia las tres.
+--   * Obligatorias: codigo, significado, tipo_sena, configuracion, ubicacion
+--   * Opcionales:   orientacion, movimiento, rasgos_no_manuales,
+--                   representacion, definicion, nota_cultural, pagina
+--   * Todas son texto no vacío, salvo pagina (entero >= 1).
+--   * No se permiten claves fuera de esta lista (evita "config" vs
+--     "configuracion").
+-- ---------------------------------------------------------------------
+CREATE FUNCTION valida_datos_fonologicos(d JSONB) RETURNS BOOLEAN
+LANGUAGE sql IMMUTABLE AS $$
+    SELECT d IS NULL OR (
+        jsonb_typeof(d) = 'object'
+        AND d ?& ARRAY['codigo', 'significado', 'tipo_sena', 'configuracion', 'ubicacion']
+        AND NOT EXISTS (
+            SELECT 1 FROM jsonb_each(d) e
+            WHERE e.key NOT IN ('codigo', 'significado', 'tipo_sena', 'configuracion',
+                                'orientacion', 'ubicacion', 'movimiento',
+                                'rasgos_no_manuales', 'representacion',
+                                'definicion', 'nota_cultural', 'pagina')
+               OR (e.key <> 'pagina' AND (jsonb_typeof(e.value) <> 'string'
+                                          OR btrim(e.value #>> '{}') = ''))
+               OR (e.key = 'pagina' AND (jsonb_typeof(e.value) <> 'number'
+                                         OR (e.value #>> '{}')::numeric < 1
+                                         OR (e.value #>> '{}')::numeric % 1 <> 0))
+        )
+    )
+$$;
+
 -- SEÑA_DICCIONARIO
 --   SENA "pertenece", DICCIONARIO "contiene", LENGUA "identifica"
 CREATE TABLE sena_diccionario (
@@ -140,7 +171,8 @@ CREATE TABLE sena_diccionario (
     id_sena              INTEGER NOT NULL REFERENCES sena (id_sena) ON DELETE CASCADE,
     id_diccionario       INTEGER NOT NULL REFERENCES diccionario (id_diccionario) ON DELETE CASCADE,
     id_lengua            INTEGER NOT NULL REFERENCES lengua (id_lengua),
-    datos_fonologicos    JSONB,
+    datos_fonologicos    JSONB CONSTRAINT datos_fonologicos_validos
+                         CHECK (valida_datos_fonologicos(datos_fonologicos)),
     UNIQUE (id_sena, id_diccionario)
 );
 
@@ -160,6 +192,7 @@ CREATE TABLE sena_video (
 -- ---------------------------------------------------------------------
 CREATE INDEX idx_definicion_lengua        ON definicion (id_lengua);
 CREATE INDEX idx_palabra_lengua           ON palabra (id_lengua);
+CREATE INDEX idx_palabra_lower            ON palabra (LOWER(palabra));
 CREATE INDEX idx_glosa_lengua             ON glosa (id_lengua);
 CREATE INDEX idx_sena_lengua              ON sena (id_lengua);
 CREATE INDEX idx_sena_tipo                ON sena (id_tipo);
@@ -171,3 +204,4 @@ CREATE INDEX idx_sena_diccionario_dic     ON sena_diccionario (id_diccionario);
 CREATE INDEX idx_sena_diccionario_lengua  ON sena_diccionario (id_lengua);
 CREATE INDEX idx_sena_video_sd            ON sena_video (id_sena_diccionario);
 CREATE INDEX idx_sena_diccionario_fono    ON sena_diccionario USING GIN (datos_fonologicos);
+CREATE INDEX idx_sena_diccionario_codigo  ON sena_diccionario ((datos_fonologicos ->> 'codigo'));

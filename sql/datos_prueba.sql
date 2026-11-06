@@ -1,7 +1,8 @@
 -- =====================================================================
 -- LSM_DB - Datos de prueba
--- Ejecutar después de 01_schema.sql (sobre un esquema recién creado,
--- porque los INSERT suponen que los id empiezan en 1).
+-- Datos INVENTADOS para probar consultas (docs/CONSULTAS.md).
+-- Ejecutar sobre un esquema recién creado (01_schema.sql), SIN los datos
+-- del diccionario, porque los INSERT suponen que los id empiezan en 1.
 --
 -- Casos incluidos a propósito para probar consultas:
 --   * Seña con palabras y definiciones en dos idiomas (es / en).
@@ -136,16 +137,16 @@ INSERT INTO sena_definicion (id_sena, id_definicion) VALUES
 
 -- SENA_DICCIONARIO ---------------------------------------------------
 INSERT INTO sena_diccionario (id_sena, id_diccionario, id_lengua, datos_fonologicos) VALUES
-    (1, 1, 1, '{"configuracion": "B", "ubicacion": "espacio neutro", "movimiento": "descendente", "orientacion": "palmas adentro", "rasgos_no_manuales": []}'),            -- 1
-    (1, 3, 1, '{"configuracion": "B", "ubicacion": "espacio neutro", "movimiento": "descendente", "orientacion": "palmas abajo"}'),                                       -- 2 (difiere de 1)
-    (2, 1, 1, '{"configuracion": "W", "ubicacion": "barbilla", "movimiento": "toque repetido", "orientacion": "palma lateral", "rasgos_no_manuales": []}'),              -- 3
-    (3, 2, 1, '{"configuracion": "O", "ubicacion": "boca", "movimiento": "toque repetido", "orientacion": "palma adentro", "rasgos_no_manuales": ["mejillas infladas"]}'), -- 4
-    (4, 1, 1, '{"configuracion": "B", "ubicacion": "barbilla", "movimiento": "hacia afuera", "orientacion": "palma adentro", "rasgos_no_manuales": ["sonrisa"]}'),       -- 5
-    (5, 3, 1, '{"configuracion": "5", "ubicacion": "barbilla", "movimiento": "toque repetido", "orientacion": "palma lateral", "rasgos_no_manuales": []}'),              -- 6
-    (6, 1, 1, '{"configuracion": "B", "ubicacion": "frente", "movimiento": "hacia afuera", "orientacion": "palma afuera", "rasgos_no_manuales": ["sonrisa"]}'),          -- 7
-    (6, 2, 1, '{"configuracion": "B", "ubicacion": "frente", "movimiento": "hacia afuera", "orientacion": "palma afuera", "rasgos_no_manuales": ["sonrisa"]}'),          -- 8 (igual a 7)
-    (7, 2, 1, '{"configuracion": "B", "ubicacion": "espacio neutro", "movimiento": "golpe", "orientacion": "palma abajo"}'),                                              -- 9
-    (8, 3, 1, '{"configuracion": "V", "ubicacion": "espacio neutro", "movimiento": "descendente", "orientacion": "palma abajo"}');                                        -- 10
+    (1, 1, 1, '{"codigo": "P-1", "significado": "Casa", "tipo_sena": "SS", "configuracion": "B", "ubicacion": "espacio neutro", "movimiento": "descendente", "orientacion": "palmas adentro"}'),                                     -- 1
+    (1, 3, 1, '{"codigo": "U-1", "significado": "Casa", "tipo_sena": "SS", "configuracion": "B", "ubicacion": "espacio neutro", "movimiento": "descendente", "orientacion": "palmas abajo"}'),                                       -- 2 (difiere de 1)
+    (2, 1, 1, '{"codigo": "P-2", "significado": "Agua", "tipo_sena": "SM", "configuracion": "W", "ubicacion": "barbilla", "movimiento": "toque repetido", "orientacion": "palma lateral"}'),                                       -- 3
+    (3, 2, 1, '{"codigo": "M-1", "significado": "Comer", "tipo_sena": "SM", "configuracion": "O", "ubicacion": "boca", "movimiento": "toque repetido", "orientacion": "palma adentro", "rasgos_no_manuales": "Mejillas infladas."}'), -- 4
+    (4, 1, 1, '{"codigo": "P-3", "significado": "Gracias", "tipo_sena": "SM", "configuracion": "B", "ubicacion": "barbilla", "movimiento": "hacia afuera", "orientacion": "palma adentro", "rasgos_no_manuales": "Sonrisa."}'),     -- 5
+    (5, 3, 1, '{"codigo": "U-2", "significado": "Mamá", "tipo_sena": "SM", "configuracion": "5", "ubicacion": "barbilla", "movimiento": "toque repetido", "orientacion": "palma lateral"}'),                                       -- 6
+    (6, 1, 1, '{"codigo": "P-4", "significado": "Hola", "tipo_sena": "SM", "configuracion": "B", "ubicacion": "frente", "movimiento": "hacia afuera", "orientacion": "palma afuera", "rasgos_no_manuales": "Sonrisa."}'),          -- 7
+    (6, 2, 1, '{"codigo": "M-2", "significado": "Hola", "tipo_sena": "SM", "configuracion": "B", "ubicacion": "frente", "movimiento": "hacia afuera", "orientacion": "palma afuera", "rasgos_no_manuales": "Sonrisa."}'),          -- 8 (igual a 7 salvo el código)
+    (7, 2, 1, '{"codigo": "M-3", "significado": "Banco (dinero)", "tipo_sena": "SM", "configuracion": "B", "ubicacion": "espacio neutro", "movimiento": "golpe", "orientacion": "palma abajo"}'),                                  -- 9
+    (8, 3, 1, '{"codigo": "U-3", "significado": "Banco (asiento)", "tipo_sena": "SB", "configuracion": "V", "ubicacion": "espacio neutro", "movimiento": "descendente", "orientacion": "palma abajo", "pagina": 12}');             -- 10
 
 -- SEÑANTE ------------------------------------------------------------
 INSERT INTO senante (edad, perfil_nativo) VALUES

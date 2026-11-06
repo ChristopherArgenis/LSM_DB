@@ -2,7 +2,8 @@
 
 Este documento explica qué se puede y qué no se puede consultar con el esquema actual.
 El SQL de cada consulta está en [`sql/03_consultas.sql`](../sql/03_consultas.sql), con el mismo código (A1, A2, …).
-Todas las consultas se probaron con los datos de [`sql/02_seed.sql`](../sql/02_seed.sql).
+Los bloques A–J se probaron con los datos inventados de [`sql/datos_prueba.sql`](../sql/datos_prueba.sql) (hola/hello, ASL…).
+El bloque K se probó con el diccionario real ([`sql/02_datos_dlsm_cdmx.sql`](../sql/02_datos_dlsm_cdmx.sql)).
 
 ## Idea clave: la SEÑA es el pivote
 
@@ -65,14 +66,22 @@ Y también explica casi todas las limitaciones: si algo no tiene seña, queda ai
 - Los **datos fonológicos** están en `sena_diccionario`, no en `sena`. Una seña que no está en ningún diccionario **no tiene fonología** (en los datos: HOUSE y HELLO de ASL).
 - Los **videos** se ligan a `sena_diccionario`, no a `sena`. Una seña que no está en un diccionario **no puede tener video**. Un video de corpus libre (sin diccionario) solo puede quedar sin etiquetar.
 
-### 1.5 Integridad que el esquema no garantiza
+### 1.5 Con el diccionario real (LSM CDMX 2017)
+
+- **No hay glosas.** El diccionario no las trae, así que las consultas A–J que usan `glosa` salen vacías. La seña se identifica por `codigo` y `significado` del JSON (bloque K).
+- **Solo hay español.** Para que funcione A4 (definición en inglés) hace falta cargar palabras y definiciones en inglés y ligarlas a las mismas señas.
+- **Los parámetros fonológicos son texto libre** (`"La MD se mueve formando un arco."`). Se puede buscar por texto (`ILIKE '%arco%'`), pero no comparar parámetro por parámetro como en D1 y D5. Para eso habría que codificarlos (p. ej. `"configuracion": "B-P.6"`).
+- **Las acepciones van juntas** en una sola definición (`1. adv. … 2. adv. …`). No se puede saber qué acepción corresponde a qué palabra del significado.
+- **Variantes `(A)`/`(B)`**: la palabra queda ligada a varias señas, pero la letra de variante solo está en el texto de `significado`.
+
+### 1.6 Integridad que el esquema no garantiza
 
 Son cosas que se pueden capturar mal sin que PostgreSQL lo impida (las consultas del bloque **I** las detectan):
 
 - `sena_diccionario.id_lengua` puede ser distinta de `sena.id_lengua` (dato redundante) → **I1**
 - Una glosa de ASL se puede ligar a una seña LSM → **I2**
 - La misma palabra se puede capturar dos veces en la misma lengua → **I3**
-- `datos_fonologicos` no tiene estructura fija: si alguien escribe `"config"` en vez de `"configuracion"`, esa seña no aparece en las búsquedas → **D6** lista las claves usadas
+- ~~`datos_fonologicos` no tiene estructura fija~~ → **resuelto**: ahora PostgreSQL valida el JSON (ver [DATOS_FONOLOGICOS.md](DATOS_FONOLOGICOS.md))
 - `modalidad`, `perfil_nativo`, `mano_dominante`, `tipo_de_toma` son texto libre ("derecha", "Derecha", "der")
 
 ---
@@ -113,7 +122,7 @@ Son cosas que se pueden capturar mal sin que PostgreSQL lo impida (las consultas
 |---|---|
 | D1 | Señas con configuración de mano "B" |
 | D2 | Búsqueda combinada (ubicación = barbilla **y** movimiento = toque repetido) |
-| D3 | Señas con un rasgo no manual (sonrisa) |
+| D3 | Señas con un rasgo no manual (texto que contiene "sonrisa") |
 | D4 | Frecuencia de cada configuración |
 | D5 | Pares mínimos: señas que difieren en un solo parámetro (AGUA / MAMÁ) |
 | D6 | Qué claves se usan en el JSON (control de calidad) |
@@ -164,6 +173,23 @@ Son cosas que se pueden capturar mal sin que PostgreSQL lo impida (las consultas
 | Código | Pregunta |
 |---|---|
 | J1 | Todo lo que se sabe de una seña en una fila: lengua, tipo, glosas, palabras, definiciones por idioma, diccionarios y número de videos |
+
+### K. Diccionario LSM CDMX 2017 (datos reales)
+| Código | Pregunta |
+|---|---|
+| K1 | Buscar una palabra y ver su seña: código, tipo, configuración, ubicación, movimiento |
+| K2 | Buscar por código del diccionario (`B-P 3`) |
+| K3 | Palabras con varias señas (variantes A/B o sentidos distintos) |
+| K4 | Sinónimos: palabras que comparten seña |
+| K5 | Señas por tipo (SM, SB, SS, SC) |
+| K6 | Señas compuestas con el detalle de cada parte |
+| K7 | Señas por grupo de configuración (prefijo del código) |
+| K8 | Búsqueda de texto en un parámetro (configuración `B-P.2`) |
+| K9 | Rasgos no manuales que mencionan las cejas |
+| K10 | Señas con nota cultural o representación |
+| K11 | Señas de lugares (STC Metro, señas internacionales) |
+| K12 | Definición en español de una palabra |
+| K13 | Cobertura de cada campo opcional del JSON |
 
 ---
 

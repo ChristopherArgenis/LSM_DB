@@ -1,6 +1,7 @@
 -- =====================================================================
 -- LSM_DB - Catálogo de consultas posibles
--- Ejecutar después de 01_schema.sql y 02_seed.sql.
+-- Bloques A–J: pensados para sql/datos_prueba.sql (hola/hello, ASL…).
+-- Bloque K: pensado para el diccionario real (02_datos_dlsm_cdmx.sql).
 -- Los valores fijos ('hola', 'Inglés', 'B', ...) son parámetros de
 -- ejemplo; cámbialos por lo que quieras buscar.
 -- Explicación de cada bloque y de las limitaciones: docs/CONSULTAS.md
@@ -212,7 +213,7 @@ SELECT DISTINCT g.glosa
 FROM sena_diccionario sdc
 JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
 JOIN glosa g       ON g.id_glosa = sg.id_glosa
-WHERE sdc.datos_fonologicos -> 'rasgos_no_manuales' ? 'sonrisa';
+WHERE sdc.datos_fonologicos ->> 'rasgos_no_manuales' ILIKE '%sonrisa%';
 
 -- D4. Frecuencia de cada configuración (o cualquier parámetro)
 SELECT datos_fonologicos ->> 'configuracion' AS configuracion, COUNT(DISTINCT id_sena) AS num_senas
@@ -470,3 +471,116 @@ FROM sena s
 JOIN lengua l         ON l.id_lengua = s.id_lengua
 LEFT JOIN tipo_sena t ON t.id_tipo_sena = s.id_tipo
 WHERE s.id_sena = 6;
+
+-- =====================================================================
+-- K. DICCIONARIO LSM CDMX 2017 (datos reales: 02_datos_dlsm_cdmx.sql)
+-- Este diccionario no trae glosas: la seña se identifica por su
+-- código y su significado dentro de datos_fonologicos.
+-- =====================================================================
+
+-- K1. Buscar una palabra en español y ver su seña completa
+SELECT p.palabra,
+       sdc.datos_fonologicos ->> 'codigo'        AS codigo,
+       sdc.datos_fonologicos ->> 'significado'   AS significado,
+       sdc.datos_fonologicos ->> 'tipo_sena'     AS tipo,
+       sdc.datos_fonologicos ->> 'configuracion' AS configuracion,
+       sdc.datos_fonologicos ->> 'ubicacion'     AS ubicacion,
+       sdc.datos_fonologicos ->> 'movimiento'    AS movimiento
+FROM palabra p
+JOIN sena_palabra sp      ON sp.id_palabra = p.id_palabra
+JOIN sena_diccionario sdc ON sdc.id_sena = sp.id_sena
+WHERE LOWER(p.palabra) = LOWER('Abajo');
+
+-- K2. Buscar por código del diccionario
+SELECT sdc.datos_fonologicos
+FROM sena_diccionario sdc
+WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 3';
+
+-- K3. Palabras con varias señas (variantes A/B o sentidos distintos)
+SELECT p.palabra, COUNT(*) AS num_senas,
+       STRING_AGG(sdc.datos_fonologicos ->> 'codigo', ', ') AS codigos
+FROM palabra p
+JOIN sena_palabra sp      ON sp.id_palabra = p.id_palabra
+JOIN sena_diccionario sdc ON sdc.id_sena = sp.id_sena
+GROUP BY p.palabra
+HAVING COUNT(*) > 1
+ORDER BY num_senas DESC, p.palabra;
+
+-- K4. Sinónimos: palabras que comparten la misma seña
+SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
+       STRING_AGG(p.palabra, ' / ') AS palabras
+FROM sena_diccionario sdc
+JOIN sena_palabra sp ON sp.id_sena = sdc.id_sena
+JOIN palabra p       ON p.id_palabra = sp.id_palabra
+GROUP BY sdc.id_sena, codigo
+HAVING COUNT(*) > 1
+ORDER BY codigo;
+
+-- K5. Señas por tipo (SM, SB, SS, SC)
+SELECT COALESCE(t.tipo, '(sin tipo)') AS tipo, COUNT(*) AS num_senas
+FROM sena s
+JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
+LEFT JOIN tipo_sena t     ON t.id_tipo_sena = s.id_tipo
+GROUP BY 1
+ORDER BY 2 DESC;
+
+-- K6. Señas compuestas con el detalle de cada parte
+SELECT sdc.datos_fonologicos ->> 'codigo'        AS codigo,
+       sdc.datos_fonologicos ->> 'significado'   AS significado,
+       sdc.datos_fonologicos ->> 'tipo_sena'     AS partes,
+       sdc.datos_fonologicos ->> 'configuracion' AS configuracion
+FROM sena s
+JOIN tipo_sena t          ON t.id_tipo_sena = s.id_tipo
+JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
+WHERE t.tipo = 'SC';
+
+-- K7. Señas por grupo de configuración (prefijo del código: B-P, 5-G, A, L, S, C, O)
+SELECT REGEXP_REPLACE(sdc.datos_fonologicos ->> 'codigo', '[- ]?\d+$', '') AS grupo,
+       COUNT(*) AS num_senas
+FROM sena_diccionario sdc
+GROUP BY 1
+ORDER BY 2 DESC;
+
+-- K8. Búsqueda de texto en un parámetro (señas que usan configuración B-P.2)
+SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
+       sdc.datos_fonologicos ->> 'significado' AS significado
+FROM sena_diccionario sdc
+WHERE sdc.datos_fonologicos ->> 'configuracion' ILIKE '%B-P.2%';
+
+-- K9. Señas con rasgos no manuales que mencionan las cejas
+SELECT sdc.datos_fonologicos ->> 'significado'        AS significado,
+       sdc.datos_fonologicos ->> 'rasgos_no_manuales' AS rasgos
+FROM sena_diccionario sdc
+WHERE sdc.datos_fonologicos ->> 'rasgos_no_manuales' ILIKE '%ceja%';
+
+-- K10. Señas con nota cultural o con representación (iconicidad)
+SELECT sdc.datos_fonologicos ->> 'significado'    AS significado,
+       sdc.datos_fonologicos ->> 'nota_cultural'  AS nota_cultural,
+       sdc.datos_fonologicos ->> 'representacion' AS representacion
+FROM sena_diccionario sdc
+WHERE sdc.datos_fonologicos ? 'nota_cultural'
+   OR sdc.datos_fonologicos ? 'representacion';
+
+-- K11. Señas de lugares (estaciones del Metro, señas de lugar internacionales)
+SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
+       sdc.datos_fonologicos ->> 'significado' AS significado
+FROM sena_diccionario sdc
+WHERE sdc.datos_fonologicos ->> 'significado' ~ '\((STC Metro|SSI)\)';
+
+-- K12. Definición de una palabra (tabla definicion, español)
+SELECT p.palabra, d.definicion
+FROM palabra p
+JOIN sena_palabra sp    ON sp.id_palabra = p.id_palabra
+JOIN sena_definicion sd ON sd.id_sena = sp.id_sena
+JOIN definicion d       ON d.id_definicion = sd.id_definicion
+WHERE LOWER(p.palabra) = LOWER('Adorar');
+
+-- K13. Cobertura de cada campo opcional del JSON
+SELECT k AS campo,
+       COUNT(*) FILTER (WHERE sdc.datos_fonologicos ? k) AS con_dato,
+       COUNT(*) AS total
+FROM sena_diccionario sdc
+CROSS JOIN UNNEST(ARRAY['orientacion', 'movimiento', 'rasgos_no_manuales',
+                        'representacion', 'definicion', 'nota_cultural', 'pagina']) k
+GROUP BY k
+ORDER BY con_dato DESC;

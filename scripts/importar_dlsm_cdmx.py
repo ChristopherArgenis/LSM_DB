@@ -24,7 +24,11 @@ RAIZ = Path(__file__).resolve().parent.parent
 ENTRADA = Path(sys.argv[1]) if len(sys.argv) > 1 else RAIZ / "data" / "LSM_diccionario_Scraper.xlsx"
 SALIDA = Path(sys.argv[2]) if len(sys.argv) > 2 else RAIZ / "sql" / "02_datos_dlsm_cdmx.sql"
 
-DICCIONARIO = "Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017)"
+DICCIONARIO = "Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)"
+# Página de créditos del diccionario: "Coordinador y editor del DLSM"
+AUTOR_DICCIONARIO = "Lic. César Ernesto Escobedo Delgado (coordinador y editor)"
+# Autor de las definiciones: el equipo de lexicografía del mismo diccionario
+AUTOR_DEFINICIONES = "Equipo de Lexicografía, DLSM CDMX 2017"
 LENGUA_SENAS = "Lengua de Señas Mexicana"
 LENGUA_ORAL = "Español"
 
@@ -165,7 +169,7 @@ def generar(entradas):
         "INSERT INTO tipo_sena (tipo) VALUES ('SM'), ('SB'), ('SS'), ('SC') ON CONFLICT (tipo) DO NOTHING;",
         "",
         f"INSERT INTO diccionario (completo, autor)",
-        f"SELECT {sql_texto(DICCIONARIO)}, NULL",
+        f"SELECT {sql_texto(DICCIONARIO)}, {sql_texto(AUTOR_DICCIONARIO)}",
         f"WHERE NOT EXISTS (SELECT 1 FROM diccionario WHERE completo = {sql_texto(DICCIONARIO)});",
         "",
         "-- Tabla temporal con cada entrada del diccionario ---------------------",
@@ -219,7 +223,7 @@ def generar(entradas):
         "",
         "-- DEFINICION ----------------------------------------------------------",
         "INSERT INTO definicion (id_definicion, definicion, autor, fecha, id_lengua) OVERRIDING SYSTEM VALUE",
-        f"SELECT e.id_definicion, e.definicion, {sql_texto(DICCIONARIO)}, NULL,",
+        f"SELECT e.id_definicion, e.definicion, {sql_texto(AUTOR_DEFINICIONES)}, NULL,",
         f"       (SELECT id_lengua FROM lengua WHERE nombre_completo = {sql_texto(LENGUA_ORAL)})",
         "FROM dlsm_entrada e",
         "WHERE e.id_definicion IS NOT NULL",

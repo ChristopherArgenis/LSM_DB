@@ -10,10 +10,11 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 |---|---|
 | `sql/01_schema.sql` | Crea el esquema `lsm`: 14 tablas, llaves, índices y validación del JSON |
 | `sql/02_datos_dlsm_cdmx.sql` | Diccionario LSM CDMX 2017 (1,006 señas). **Generado**, no editar a mano |
-| `sql/03_consultas.sql` | Catálogo de consultas (A1…K13) |
-| `sql/datos_prueba.sql` | Datos inventados para probar consultas (hola/hello, ASL, videos…) |
+| `sql/03_consultas.sql` | Catálogo de consultas (A1…K6) |
+| `docs/SALIDAS.md` | Resultados de cada consulta. **Generado** por `scripts/generar_salidas.py` |
 | `data/LSM_diccionario_Scraper.xlsx` | Scrapeo original del diccionario |
 | `scripts/importar_dlsm_cdmx.py` | Convierte el Excel en `02_datos_dlsm_cdmx.sql` |
+| `scripts/generar_salidas.py` | Ejecuta las consultas y escribe `docs/SALIDAS.md` |
 | `schemas/datos_fonologicos.schema.json` | JSON Schema de `datos_fonologicos` |
 | `docs/DATOS_FONOLOGICOS.md` | Campos del JSON, cuáles son obligatorios y ejemplos |
 | `docs/IMPORTACION_DLSM_CDMX.md` | Qué se importó, correcciones aplicadas y pendientes |
@@ -21,21 +22,17 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 
 ## Instalación
 
-Con el diccionario real:
-
 ```bash
 createdb lsm_db
 psql -d lsm_db -f sql/01_schema.sql -f sql/02_datos_dlsm_cdmx.sql
 ```
 
-Con los datos de prueba (en otra base, porque suponen ids desde 1):
+Para ver los resultados de las consultas:
 
 ```bash
-createdb lsm_prueba
-psql -d lsm_prueba -f sql/01_schema.sql -f sql/datos_prueba.sql
+python3 scripts/generar_salidas.py          # todas -> docs/SALIDAS.md
+python3 scripts/generar_salidas.py A1 D7    # solo esas, en pantalla
 ```
-
-Para ver todas las consultas: `psql -d <base> -f sql/03_consultas.sql`.
 
 `01_schema.sql` borra y vuelve a crear el esquema `lsm`, así que se puede ejecutar varias veces para reiniciar la base.
 

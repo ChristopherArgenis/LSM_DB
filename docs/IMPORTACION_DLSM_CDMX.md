@@ -13,11 +13,11 @@ python3 scripts/importar_dlsm_cdmx.py
 | Tabla | Filas | De dónde sale |
 |---|---|---|
 | `lengua` | 2 | "Lengua de Señas Mexicana" y "Español" |
-| `diccionario` | 1 | "Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017)". `autor` queda vacío (el Excel no lo trae) |
+| `diccionario` | 1 | `completo`: "Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)". `autor`: "Lic. César Ernesto Escobedo Delgado (coordinador y editor)", según la página de créditos |
 | `tipo_sena` | 4 | `SM`, `SB`, `SS`, `SC` (columna *Tipo de Seña*) |
 | `sena` | 1,006 | Una por fila del Excel. `id_tipo` = tipo principal (`SC` si es compuesta) |
 | `sena_diccionario` | 1,006 | Una por seña, con todo el detalle en `datos_fonologicos` |
-| `definicion` | 1,006 | Columna *Definición*, en español. `autor` = nombre del diccionario, `fecha` vacía |
+| `definicion` | 1,006 | Columna *Definición*, en español. `autor` = "Equipo de Lexicografía, DLSM CDMX 2017", `fecha` vacía |
 | `sena_definicion` | 1,006 | Una por seña |
 | `palabra` | 1,123 | Palabras en español sacadas de *Significado* (sin repetir) |
 | `sena_palabra` | 1,258 | Una seña puede tener varias palabras (sinónimos, acepciones) |
@@ -25,6 +25,7 @@ python3 scripts/importar_dlsm_cdmx.py
 ## Qué NO se llenó
 
 `glosa`, `sena_glosa`, `senante`, `video`, `sena_video`: el diccionario no trae esa información.
+La página de créditos nombra a las personas sordas que modelaron las señas en las fotos, pero no dice quién modeló cada seña ni su edad o perfil, así que tampoco se cargan en `senante`.
 La seña se identifica por `codigo` y `significado` dentro de `datos_fonologicos`.
 
 ## Correspondencia de columnas

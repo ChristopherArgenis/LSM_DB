@@ -1,5 +1,5 @@
 -- =====================================================================
--- Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017)
+-- Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)
 -- ARCHIVO GENERADO por scripts/importar_dlsm_cdmx.py — no editar a mano.
 -- Ejecutar después de 01_schema.sql. Busca lengua, diccionario y tipos
 -- por nombre, así que se puede cargar junto con otros datos.
@@ -16,8 +16,8 @@ WHERE NOT EXISTS (SELECT 1 FROM lengua l WHERE l.nombre_completo = v.n);
 INSERT INTO tipo_sena (tipo) VALUES ('SM'), ('SB'), ('SS'), ('SC') ON CONFLICT (tipo) DO NOTHING;
 
 INSERT INTO diccionario (completo, autor)
-SELECT 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017)', NULL
-WHERE NOT EXISTS (SELECT 1 FROM diccionario WHERE completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017)');
+SELECT 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)', 'Lic. César Ernesto Escobedo Delgado (coordinador y editor)'
+WHERE NOT EXISTS (SELECT 1 FROM diccionario WHERE completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)');
 
 -- Tabla temporal con cada entrada del diccionario ---------------------
 CREATE TEMP TABLE dlsm_entrada (
@@ -1059,7 +1059,7 @@ ORDER BY e.n;
 -- SENA_DICCIONARIO (datos_fonologicos) --------------------------------
 INSERT INTO sena_diccionario (id_sena, id_diccionario, id_lengua, datos_fonologicos)
 SELECT e.id_sena,
-       (SELECT id_diccionario FROM diccionario WHERE completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017)'),
+       (SELECT id_diccionario FROM diccionario WHERE completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)'),
        (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Lengua de Señas Mexicana'),
        e.fono
 FROM dlsm_entrada e
@@ -1067,7 +1067,7 @@ ORDER BY e.n;
 
 -- DEFINICION ----------------------------------------------------------
 INSERT INTO definicion (id_definicion, definicion, autor, fecha, id_lengua) OVERRIDING SYSTEM VALUE
-SELECT e.id_definicion, e.definicion, 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017)', NULL,
+SELECT e.id_definicion, e.definicion, 'Equipo de Lexicografía, DLSM CDMX 2017', NULL,
        (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Español')
 FROM dlsm_entrada e
 WHERE e.id_definicion IS NOT NULL

@@ -13,7 +13,7 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 | `sql/02b_glosas_dlsm_cdmx.sql` | Una glosa por seña (1,006), construida del significado. **Generado** |
 | `sql/03_consultas.sql` | Catálogo completo de consultas (A1…K6), con glosas |
 | `sql/04_consultas_relevantes.sql` | 20 consultas interesantes para explorar el diccionario |
-| `sql/05_consultas_limitaciones.sql` | 13 consultas que muestran los límites del modelo (con y sin resultados) |
+| `sql/05_consultas_limitaciones.sql` | 13 límites del diseño de la base (independientes del diccionario), con demostración |
 | `sql/06_consultas_api.sql` | Funciones `api.*` que devuelven JSON, como endpoints de una API |
 | `docs/SALIDAS.md` | Resultados de cada consulta. **Generado** por `scripts/generar_salidas.py` |
 | `data/LSM_diccionario_Scraper.xlsx` | Scrapeo original del diccionario |

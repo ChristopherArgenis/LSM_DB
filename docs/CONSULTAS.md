@@ -80,7 +80,7 @@ En cuanto se carguen definiciones en inglés ligadas a las mismas señas, A4 fun
 Cosas que se pueden capturar mal sin que PostgreSQL lo impida (el bloque **I** las detecta):
 
 - Códigos repetidos en el JSON (`C-84` aparece dos veces) → **I1**
-- `sena_diccionario.id_lengua` distinta de `sena.id_lengua` → **I3**
+- Entradas de diccionario sin seña o sin diccionario → **I3**
 - La misma palabra capturada dos veces → **I4**
 - `modalidad`, `perfil_nativo`, `mano_dominante`, `tipo_de_toma` son texto libre ("derecha", "Derecha", "der")
 - ~~`datos_fonologicos` sin estructura fija~~ → resuelto: PostgreSQL valida el JSON ([DATOS_FONOLOGICOS.md](DATOS_FONOLOGICOS.md))

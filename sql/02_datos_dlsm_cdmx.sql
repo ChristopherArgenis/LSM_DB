@@ -1059,10 +1059,9 @@ LEFT JOIN tipo_sena t ON t.tipo = e.tipo
 ORDER BY e.n;
 
 -- SENA_DICCIONARIO (datos_fonologicos) --------------------------------
-INSERT INTO sena_diccionario (id_sena, id_diccionario, id_lengua, datos_fonologicos)
+INSERT INTO sena_diccionario (id_sena, id_diccionario, datos_fonologicos)
 SELECT e.id_sena,
        (SELECT id_diccionario FROM diccionario WHERE nombre_completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)'),
-       (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Lengua de Señas Mexicana'),
        e.fono
 FROM dlsm_entrada e
 ORDER BY e.n;

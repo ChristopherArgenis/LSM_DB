@@ -139,7 +139,11 @@ CREATE TABLE sena_glosa (
 -- docs/DATOS_FONOLOGICOS.md. Si cambias una, cambia las tres.
 --   * Obligatorias: codigo, significado, tipo_sena, configuracion, ubicacion
 --   * Opcionales:   orientacion, movimiento, rasgos_no_manuales,
---                   representacion, definicion, nota_cultural, pagina
+--                   representacion, definicion, nota_cultural, nota,
+--                   pagina
+--   * "nota" guarda las excepciones de la entrada: lo que el diccionario
+--     advierte sobre la seña y no cabe en otra clave (variantes de uso,
+--     diferencias con otra seña, dudas de captura...).
 --   * Todas son texto no vacío, salvo pagina (entero >= 1).
 --   * No se permiten claves fuera de esta lista (evita "config" vs
 --     "configuracion").
@@ -154,7 +158,7 @@ LANGUAGE sql IMMUTABLE AS $$
             WHERE e.key NOT IN ('codigo', 'significado', 'tipo_sena', 'configuracion',
                                 'orientacion', 'ubicacion', 'movimiento',
                                 'rasgos_no_manuales', 'representacion',
-                                'definicion', 'nota_cultural', 'pagina')
+                                'definicion', 'nota_cultural', 'nota', 'pagina')
                OR (e.key <> 'pagina' AND (jsonb_typeof(e.value) <> 'string'
                                           OR btrim(e.value #>> '{}') = ''))
                OR (e.key = 'pagina' AND (jsonb_typeof(e.value) <> 'number'
@@ -165,12 +169,14 @@ LANGUAGE sql IMMUTABLE AS $$
 $$;
 
 -- SEÑA_DICCIONARIO
---   SENA "pertenece", DICCIONARIO "contiene", LENGUA "identifica"
+--   SENA "pertenece", DICCIONARIO "contiene"
+--   No lleva id_lengua: la lengua de una entrada es la de su seña
+--   (sena.id_lengua). Guardarla aquí también sería redundante y podría
+--   contradecirse. Ver sql/migraciones/2026-11-11_quitar_lengua_sena_diccionario.sql.
 CREATE TABLE sena_diccionario (
     id_sena_diccionario  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_sena              INTEGER NOT NULL REFERENCES sena (id_sena) ON DELETE CASCADE,
     id_diccionario       INTEGER NOT NULL REFERENCES diccionario (id_diccionario) ON DELETE CASCADE,
-    id_lengua            INTEGER NOT NULL REFERENCES lengua (id_lengua),
     datos_fonologicos    JSONB CONSTRAINT datos_fonologicos_validos
                          CHECK (valida_datos_fonologicos(datos_fonologicos)),
     UNIQUE (id_sena, id_diccionario)
@@ -201,7 +207,6 @@ CREATE INDEX idx_sena_definicion_def      ON sena_definicion (id_definicion);
 CREATE INDEX idx_sena_palabra_palabra     ON sena_palabra (id_palabra);
 CREATE INDEX idx_sena_glosa_glosa         ON sena_glosa (id_glosa);
 CREATE INDEX idx_sena_diccionario_dic     ON sena_diccionario (id_diccionario);
-CREATE INDEX idx_sena_diccionario_lengua  ON sena_diccionario (id_lengua);
 CREATE INDEX idx_sena_video_sd            ON sena_video (id_sena_diccionario);
 CREATE INDEX idx_sena_diccionario_fono    ON sena_diccionario USING GIN (datos_fonologicos);
 CREATE INDEX idx_sena_diccionario_codigo  ON sena_diccionario ((datos_fonologicos ->> 'codigo'));

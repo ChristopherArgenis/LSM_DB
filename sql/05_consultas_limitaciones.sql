@@ -244,29 +244,31 @@ GROUP BY sdc.id_diccionario, 1
 HAVING COUNT(*) > 1;
 
 -- =====================================================================
--- L10. La lengua se guarda dos veces y puede contradecirse
+-- L10. La lengua de una glosa puede no coincidir con la de su seña
 -- ---------------------------------------------------------------------
--- Se quiere:  confiar en que una entrada de diccionario es de la misma
---             lengua que su seña.
--- Por qué no: sena.id_lengua y sena_diccionario.id_lengua son columnas
+-- Se quiere:  confiar en que la glosa de una seña de LSM esté escrita
+--             como glosa de LSM.
+-- Por qué no: sena.id_lengua y glosa.id_lengua son columnas
 --             independientes; ninguna regla obliga a que coincidan.
---             Lo mismo pasa entre sena y glosa.
--- Con más lenguas: se podría ligar una entrada de ASL a una seña de LSM
+--             (La copia que había en sena_diccionario.id_lengua ya se
+--             quitó: ver sql/migraciones/2026-11-11_quitar_lengua_sena_diccionario.sql.)
+-- Con más lenguas: se podría ligar una glosa de ASL a una seña de LSM
 --             sin que la base lo impida.
--- Lo resolvería: quitar el dato duplicado, o una regla (CHECK o trigger)
---             que compare ambas lenguas.
+-- Lo resolvería: un trigger en sena_glosa que compare ambas lenguas.
 -- =====================================================================
 
--- Demostración sobre la estructura: no hay ninguna restricción CHECK ni
--- trigger que compare las lenguas (0 filas).
-SELECT conname
-FROM pg_constraint
-WHERE conrelid = 'lsm.sena_diccionario'::regclass AND contype = 'c'
-  AND pg_get_constraintdef(oid) ILIKE '%lengua%';
+-- Demostración sobre la estructura: sena_diccionario ya no tiene
+-- id_lengua (0 filas) ...
+SELECT column_name
+FROM information_schema.columns
+WHERE table_schema = 'lsm' AND table_name = 'sena_diccionario'
+  AND column_name = 'id_lengua';
 
+-- ... pero no hay ningún trigger que compare la lengua de la glosa con
+-- la de la seña (0 filas).
 SELECT tgname
 FROM pg_trigger
-WHERE tgrelid IN ('lsm.sena_diccionario'::regclass, 'lsm.sena_glosa'::regclass)
+WHERE tgrelid = 'lsm.sena_glosa'::regclass
   AND NOT tgisinternal;
 
 -- =====================================================================

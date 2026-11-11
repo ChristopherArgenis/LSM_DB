@@ -10,10 +10,12 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 |---|---|
 | `sql/01_schema.sql` | Crea el esquema `lsm`: 14 tablas, llaves, índices y validación del JSON |
 | `sql/02_datos_dlsm_cdmx.sql` | Diccionario LSM CDMX 2017 (1,006 señas). **Generado**, no editar a mano |
+| `sql/02b_glosas_dlsm_cdmx.sql` | Una glosa por seña (1,006), construida del significado. **Generado** |
 | `sql/03_consultas.sql` | Catálogo de consultas (A1…K6) |
 | `docs/SALIDAS.md` | Resultados de cada consulta. **Generado** por `scripts/generar_salidas.py` |
 | `data/LSM_diccionario_Scraper.xlsx` | Scrapeo original del diccionario |
 | `scripts/importar_dlsm_cdmx.py` | Convierte el Excel en `02_datos_dlsm_cdmx.sql` |
+| `scripts/generar_glosas_dlsm_cdmx.py` | Construye las glosas y escribe `02b_glosas_dlsm_cdmx.sql` |
 | `scripts/generar_salidas.py` | Ejecuta las consultas y escribe `docs/SALIDAS.md` |
 | `schemas/datos_fonologicos.schema.json` | JSON Schema de `datos_fonologicos` |
 | `docs/DATOS_FONOLOGICOS.md` | Campos del JSON, cuáles son obligatorios y ejemplos |
@@ -24,7 +26,7 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 
 ```bash
 createdb lsm_db
-psql -d lsm_db -f sql/01_schema.sql -f sql/02_datos_dlsm_cdmx.sql
+psql -d lsm_db -f sql/01_schema.sql -f sql/02_datos_dlsm_cdmx.sql -f sql/02b_glosas_dlsm_cdmx.sql
 ```
 
 Para ver los resultados de las consultas:

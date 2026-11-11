@@ -276,7 +276,7 @@ ORDER BY l.id_lengua;
 | nombre_completo | palabras | glosas | definiciones |
 |---|---|---|---|
 | Español | 1123 | 0 | 1006 |
-| Lengua de Señas Mexicana | 0 | 0 | 0 |
+| Lengua de Señas Mexicana | 0 | 1006 | 0 |
 
 *2 filas.*
 
@@ -932,8 +932,9 @@ ORDER BY autor, tipo;
 | autor | tipo | total |
 |---|---|---|
 | Equipo de Lexicografía, DLSM CDMX 2017 | definicion | 1006 |
+| LSM_DB (generadas a partir del DLSM CDMX 2017) | glosa | 1006 |
 
-*1 fila.*
+*2 filas.*
 
 ## H. Cobertura (qué falta por capturar)
 
@@ -958,7 +959,7 @@ FROM sena s;
 
 | senas | con_palabra | con_definicion | con_glosa | en_diccionario | con_video | con_tipo |
 |---|---|---|---|---|---|---|
-| 1006 | 1006 | 1006 | 0 | 1006 | 0 | 1005 |
+| 1006 | 1006 | 1006 | 1006 | 1006 | 0 | 1005 |
 
 *1 fila.*
 

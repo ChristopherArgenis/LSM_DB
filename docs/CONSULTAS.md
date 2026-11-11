@@ -69,7 +69,7 @@ En cuanto se carguen definiciones en inglés ligadas a las mismas señas, A4 fun
 
 ### 1.5 Lo que el Diccionario CDMX no trae
 
-- **Glosas:** la seña se identifica por `codigo` y `significado` del JSON.
+- **Glosas:** el diccionario no las trae; se generaron a partir del significado (`sql/02b_glosas_dlsm_cdmx.sql`). Son etiquetas de trabajo, no glosas validadas por especialistas.
 - **Otros idiomas:** solo hay español, así que A3 y A4 salen vacías.
 - **Videos y señantes:** el bloque F sale vacío.
 - **Un segundo diccionario:** la comparación entre diccionarios (C4) sale vacía.

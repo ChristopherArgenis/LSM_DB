@@ -10,6 +10,8 @@
 SET search_path TO lsm;
 BEGIN;
 
+-- Tabla temporal (sin ON COMMIT DROP, para que funcione en DBeaver con auto-commit)
+DROP TABLE IF EXISTS dlsm_glosa;
 CREATE TEMP TABLE dlsm_glosa (
     n           INTEGER PRIMARY KEY,
     codigo      TEXT NOT NULL,
@@ -17,7 +19,7 @@ CREATE TEMP TABLE dlsm_glosa (
     glosa       TEXT NOT NULL,
     id_sena     INTEGER,
     id_glosa    INTEGER
-) ON COMMIT DROP;
+);
 
 INSERT INTO dlsm_glosa (n, codigo, significado, glosa) VALUES
 (1, 'B-P 1', '¿Por qué?', 'POR-QUÉ'),
@@ -1069,4 +1071,5 @@ INSERT INTO sena_glosa (id_sena, id_glosa)
 SELECT id_sena, id_glosa FROM dlsm_glosa ORDER BY n
 ON CONFLICT (id_sena, id_glosa) DO NOTHING;
 
+DROP TABLE dlsm_glosa;
 COMMIT;

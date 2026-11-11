@@ -20,6 +20,8 @@ SELECT 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 
 WHERE NOT EXISTS (SELECT 1 FROM diccionario WHERE nombre_completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)');
 
 -- Tabla temporal con cada entrada del diccionario ---------------------
+-- Tabla temporal (sin ON COMMIT DROP, para que funcione en DBeaver con auto-commit)
+DROP TABLE IF EXISTS dlsm_entrada;
 CREATE TEMP TABLE dlsm_entrada (
     n           INTEGER PRIMARY KEY,
     tipo        TEXT,
@@ -28,7 +30,7 @@ CREATE TEMP TABLE dlsm_entrada (
     definicion  TEXT,
     id_sena     INTEGER,
     id_definicion INTEGER
-) ON COMMIT DROP;
+);
 
 INSERT INTO dlsm_entrada (n, tipo, fono, palabras, definicion) VALUES
 (1, 'SB', '{"codigo": "B-P 1", "significado": "¿Por qué?", "tipo_sena": "SB", "configuracion": "MD seña que pasa de B-P.2 a 1.1, MB S.1", "orientacion": "MD la palma inicia hacia abajo y termina hacia arriba, MB palma hacia afuera .", "ubicacion": "La MD inicia sobre MB y termina a la altura de los hombros; MB a la altura del pecho.", "movimiento": "MD recto y después la mano se agita.", "rasgos_no_manuales": "Ceño fruncido, boca semiabierta.", "definicion": "loc. adv. Por cuál razón, causa o motivo.", "pagina": 1}', ARRAY['¿Por qué?']::text[], 'loc. adv. Por cuál razón, causa o motivo.'),
@@ -1094,4 +1096,5 @@ JOIN palabra x ON LOWER(x.palabra) = LOWER(p.palabra)
              AND x.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Español')
 ON CONFLICT (id_sena, id_palabra) DO NOTHING;
 
+DROP TABLE dlsm_entrada;
 COMMIT;

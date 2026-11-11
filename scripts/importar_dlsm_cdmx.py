@@ -173,6 +173,8 @@ def generar(entradas):
         f"WHERE NOT EXISTS (SELECT 1 FROM diccionario WHERE nombre_completo = {sql_texto(DICCIONARIO)});",
         "",
         "-- Tabla temporal con cada entrada del diccionario ---------------------",
+        "-- Tabla temporal (sin ON COMMIT DROP, para que funcione en DBeaver con auto-commit)",
+        "DROP TABLE IF EXISTS dlsm_entrada;",
         "CREATE TEMP TABLE dlsm_entrada (",
         "    n           INTEGER PRIMARY KEY,",
         "    tipo        TEXT,",
@@ -181,7 +183,7 @@ def generar(entradas):
         "    definicion  TEXT,",
         "    id_sena     INTEGER,",
         "    id_definicion INTEGER",
-        ") ON COMMIT DROP;",
+        ");",
         "",
         "INSERT INTO dlsm_entrada (n, tipo, fono, palabras, definicion) VALUES",
     ]
@@ -250,6 +252,7 @@ def generar(entradas):
         f"             AND x.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = {sql_texto(LENGUA_ORAL)})",
         "ON CONFLICT (id_sena, id_palabra) DO NOTHING;",
         "",
+        "DROP TABLE dlsm_entrada;",
         "COMMIT;",
         "",
     ]

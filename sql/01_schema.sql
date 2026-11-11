@@ -80,7 +80,7 @@ CREATE TABLE sena (
 -- ---------------------------------------------------------------------
 CREATE TABLE diccionario (
     id_diccionario  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    completo        VARCHAR(200) NOT NULL,
+    nombre_completo VARCHAR(200) NOT NULL,
     autor           VARCHAR(150)
 );
 

@@ -52,7 +52,7 @@ En cuanto se carguen definiciones en inglés ligadas a las mismas señas, A4 fun
 | Variantes por región / estado / comunidad | Campo `region` en `sena`, `senante` o `video` |
 | Sinónimos, variantes o componentes **entre señas** | Tabla `sena_relacion (id_sena_a, id_sena_b, tipo)`. Existe el tipo SC (compuesta), pero no se puede decir de qué señas se compone |
 | Equivalencia directa LSM ↔ ASL | Hoy solo se deduciría si ambas señas comparten una palabra (B1) |
-| Lengua, año o equipo completo de un diccionario | `diccionario` solo tiene `completo` y `autor` |
+| Lengua, año o equipo completo de un diccionario | `diccionario` solo tiene `nombre_completo` y `autor` |
 | Qué diccionario dio una definición | `definicion` no se liga a `diccionario` (se usa el campo `autor`) |
 | Ejemplos de uso u oraciones | No hay tablas ni campos para ello |
 | Categoría gramatical | Solo se puede deducir del inicio de la definición (`sust.`, `v.`, … en K5) |

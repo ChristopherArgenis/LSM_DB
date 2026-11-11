@@ -15,9 +15,9 @@ WHERE NOT EXISTS (SELECT 1 FROM lengua l WHERE l.nombre_completo = v.n);
 
 INSERT INTO tipo_sena (tipo) VALUES ('SM'), ('SB'), ('SS'), ('SC') ON CONFLICT (tipo) DO NOTHING;
 
-INSERT INTO diccionario (completo, autor)
+INSERT INTO diccionario (nombre_completo, autor)
 SELECT 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)', 'Lic. César Ernesto Escobedo Delgado (coordinador y editor)'
-WHERE NOT EXISTS (SELECT 1 FROM diccionario WHERE completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)');
+WHERE NOT EXISTS (SELECT 1 FROM diccionario WHERE nombre_completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)');
 
 -- Tabla temporal con cada entrada del diccionario ---------------------
 CREATE TEMP TABLE dlsm_entrada (
@@ -1059,7 +1059,7 @@ ORDER BY e.n;
 -- SENA_DICCIONARIO (datos_fonologicos) --------------------------------
 INSERT INTO sena_diccionario (id_sena, id_diccionario, id_lengua, datos_fonologicos)
 SELECT e.id_sena,
-       (SELECT id_diccionario FROM diccionario WHERE completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)'),
+       (SELECT id_diccionario FROM diccionario WHERE nombre_completo = 'Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)'),
        (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Lengua de Señas Mexicana'),
        e.fono
 FROM dlsm_entrada e

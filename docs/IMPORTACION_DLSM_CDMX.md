@@ -13,7 +13,7 @@ python3 scripts/importar_dlsm_cdmx.py
 | Tabla | Filas | De dónde sale |
 |---|---|---|
 | `lengua` | 2 | "Lengua de Señas Mexicana" y "Español" |
-| `diccionario` | 1 | `completo`: "Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)". `autor`: "Lic. César Ernesto Escobedo Delgado (coordinador y editor)", según la página de créditos |
+| `diccionario` | 1 | `nombre_completo`: "Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)". `autor`: "Lic. César Ernesto Escobedo Delgado (coordinador y editor)", según la página de créditos |
 | `tipo_sena` | 4 | `SM`, `SB`, `SS`, `SC` (columna *Tipo de Seña*) |
 | `sena` | 1,006 | Una por fila del Excel. `id_tipo` = tipo principal (`SC` si es compuesta) |
 | `sena_diccionario` | 1,006 | Una por seña, con todo el detalle en `datos_fonologicos` |

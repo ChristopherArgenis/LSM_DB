@@ -124,13 +124,13 @@ ORDER BY l.id_lengua;
 -- =====================================================================
 
 -- C1. Datos del diccionario
-SELECT id_diccionario, completo, autor FROM diccionario;
+SELECT id_diccionario, nombre_completo, autor FROM diccionario;
 
 -- C2. Número de señas por diccionario
-SELECT dic.completo, COUNT(sdc.id_sena) AS num_senas
+SELECT dic.nombre_completo, COUNT(sdc.id_sena) AS num_senas
 FROM diccionario dic
 LEFT JOIN sena_diccionario sdc ON sdc.id_diccionario = dic.id_diccionario
-GROUP BY dic.completo
+GROUP BY dic.nombre_completo
 ORDER BY num_senas DESC;
 
 -- C3. Contenido del diccionario por página del PDF
@@ -424,7 +424,7 @@ SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
        t.tipo,
        (SELECT STRING_AGG(p.palabra, ', ') FROM sena_palabra x JOIN palabra p USING (id_palabra) WHERE x.id_sena = s.id_sena) AS palabras,
        (SELECT STRING_AGG(d.definicion, ' | ') FROM sena_definicion x JOIN definicion d USING (id_definicion) WHERE x.id_sena = s.id_sena) AS definiciones,
-       dic.completo AS diccionario,
+       dic.nombre_completo AS diccionario,
        sdc.datos_fonologicos ->> 'configuracion' AS configuracion,
        sdc.datos_fonologicos ->> 'ubicacion'     AS ubicacion,
        sdc.datos_fonologicos ->> 'movimiento'    AS movimiento

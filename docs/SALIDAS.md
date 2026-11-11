@@ -287,12 +287,12 @@ ORDER BY l.id_lengua;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT id_diccionario, completo, autor FROM diccionario;
+SELECT id_diccionario, nombre_completo, autor FROM diccionario;
 ```
 
 </details>
 
-| id_diccionario | completo | autor |
+| id_diccionario | nombre_completo | autor |
 |---|---|---|
 | 1 | Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017) | Lic. César Ernesto Escobedo Delgado (coordinador y editor) |
 
@@ -303,16 +303,16 @@ SELECT id_diccionario, completo, autor FROM diccionario;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT dic.completo, COUNT(sdc.id_sena) AS num_senas
+SELECT dic.nombre_completo, COUNT(sdc.id_sena) AS num_senas
 FROM diccionario dic
 LEFT JOIN sena_diccionario sdc ON sdc.id_diccionario = dic.id_diccionario
-GROUP BY dic.completo
+GROUP BY dic.nombre_completo
 ORDER BY num_senas DESC;
 ```
 
 </details>
 
-| completo | num_senas |
+| nombre_completo | num_senas |
 |---|---|
 | Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017) | 1006 |
 
@@ -1141,7 +1141,7 @@ SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
        t.tipo,
        (SELECT STRING_AGG(p.palabra, ', ') FROM sena_palabra x JOIN palabra p USING (id_palabra) WHERE x.id_sena = s.id_sena) AS palabras,
        (SELECT STRING_AGG(d.definicion, ' | ') FROM sena_definicion x JOIN definicion d USING (id_definicion) WHERE x.id_sena = s.id_sena) AS definiciones,
-       dic.completo AS diccionario,
+       dic.nombre_completo AS diccionario,
        sdc.datos_fonologicos ->> 'configuracion' AS configuracion,
        sdc.datos_fonologicos ->> 'ubicacion'     AS ubicacion,
        sdc.datos_fonologicos ->> 'movimiento'    AS movimiento

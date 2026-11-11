@@ -1,47 +1,57 @@
 -- =====================================================================
 -- LSM_DB - Catálogo de consultas
--- Ejecutar después de 01_schema.sql y 02_datos_dlsm_cdmx.sql.
+-- Ejecutar después de 01_schema.sql, 02_datos_dlsm_cdmx.sql y
+-- 02b_glosas_dlsm_cdmx.sql.
 --
--- Los valores entre comillas ('Casa', 'B-P 3', 'A.1', ...) son
+-- Cada seña se identifica por su GLOSA (CASA-A, ABAJO, ADORAR-1).
+-- El código del diccionario (B-P 4) se muestra solo cuando aporta algo.
+--
+-- Los valores entre comillas ('Casa', 'ABAJO', 'A.1', ...) son
 -- parámetros de ejemplo: cámbialos por lo que quieras buscar.
 -- Las palabras se comparan con LOWER() para no depender de mayúsculas.
 --
 -- Algunas consultas salen vacías con los datos actuales porque la base
--- todavía no tiene esa información (inglés, ASL, glosas, videos o un
--- segundo diccionario). Están marcadas con [VACÍA HOY] y dicen qué falta.
+-- todavía no tiene esa información (inglés, ASL, videos o un segundo
+-- diccionario). Están marcadas con [VACÍA HOY] y dicen qué falta.
 -- Las salidas de todas están en docs/SALIDAS.md.
 -- =====================================================================
 SET search_path TO lsm;
 
 -- =====================================================================
 -- A. PALABRAS, TRADUCCIÓN Y DEFINICIONES
--- La SEÑA es el pivote: palabras y definiciones de cualquier idioma
--- solo se unen a través de ella.
+-- La SEÑA es el pivote: palabras, glosas y definiciones de cualquier
+-- idioma solo se unen a través de ella.
 -- =====================================================================
 
--- A1. Seña(s) de una palabra, con su código y significado en el diccionario
-SELECT p.palabra,
-       sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado
+-- A1. Seña(s) de una palabra: su glosa y su código en el diccionario
+SELECT p.palabra, g.glosa,
+       sdc.datos_fonologicos ->> 'codigo' AS codigo
 FROM palabra p
 JOIN sena_palabra sp      ON sp.id_palabra = p.id_palabra
+JOIN sena_glosa sg        ON sg.id_sena = sp.id_sena
+JOIN glosa g              ON g.id_glosa = sg.id_glosa
 JOIN sena_diccionario sdc ON sdc.id_sena = sp.id_sena
-WHERE LOWER(p.palabra) = LOWER('Casa');
+WHERE LOWER(p.palabra) = LOWER('Casa')
+ORDER BY g.glosa;
 
--- A2. Todas las palabras ligadas a una seña (por código)
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, p.palabra, l.nombre_completo AS idioma
-FROM sena_diccionario sdc
-JOIN sena_palabra sp ON sp.id_sena = sdc.id_sena
+-- A2. Todas las palabras de una glosa, con su idioma
+SELECT g.glosa, p.palabra, l.nombre_completo AS idioma
+FROM glosa g
+JOIN sena_glosa sg   ON sg.id_glosa = g.id_glosa
+JOIN sena_palabra sp ON sp.id_sena = sg.id_sena
 JOIN palabra p       ON p.id_palabra = sp.id_palabra
 JOIN lengua l        ON l.id_lengua = p.id_lengua
-WHERE sdc.datos_fonologicos ->> 'codigo' = '5-G 51';
+WHERE g.glosa = 'BONITO'
+ORDER BY p.palabra;
 
 -- A3. [VACÍA HOY: falta cargar palabras en inglés]
 --     Traducir una palabra de español a inglés a través de la seña
-SELECT DISTINCT origen.palabra AS espanol, destino.palabra AS ingles
+SELECT DISTINCT origen.palabra AS espanol, g.glosa, destino.palabra AS ingles
 FROM palabra origen
 JOIN sena_palabra sp1 ON sp1.id_palabra = origen.id_palabra
-JOIN sena_palabra sp2 ON sp2.id_sena    = sp1.id_sena
+JOIN sena_glosa sg    ON sg.id_sena = sp1.id_sena
+JOIN glosa g          ON g.id_glosa = sg.id_glosa
+JOIN sena_palabra sp2 ON sp2.id_sena = sp1.id_sena
 JOIN palabra destino  ON destino.id_palabra = sp2.id_palabra
 WHERE LOWER(origen.palabra) = LOWER('Casa')
   AND origen.id_lengua  = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Español')
@@ -50,44 +60,49 @@ WHERE LOWER(origen.palabra) = LOWER('Casa')
 -- A4. [VACÍA HOY: falta cargar definiciones en inglés]
 --     Definición en inglés de una palabra en español
 --     palabra(es) -> sena_palabra -> sena -> sena_definicion -> definicion(en)
-SELECT DISTINCT p.palabra, d.definicion
+SELECT DISTINCT p.palabra, g.glosa, d.definicion
 FROM palabra p
 JOIN sena_palabra sp    ON sp.id_palabra = p.id_palabra
-JOIN sena_definicion sd ON sd.id_sena    = sp.id_sena
+JOIN sena_glosa sg      ON sg.id_sena = sp.id_sena
+JOIN glosa g            ON g.id_glosa = sg.id_glosa
+JOIN sena_definicion sd ON sd.id_sena = sp.id_sena
 JOIN definicion d       ON d.id_definicion = sd.id_definicion
-WHERE LOWER(p.palabra) = LOWER('Hola')
+WHERE LOWER(p.palabra) = LOWER('Banco')
   AND p.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Español')
   AND d.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Inglés');
 
 -- A5. Definición en español de una palabra (misma ruta que A4)
-SELECT p.palabra, sdc.datos_fonologicos ->> 'codigo' AS codigo, d.definicion
+SELECT p.palabra, g.glosa, d.definicion
 FROM palabra p
-JOIN sena_palabra sp      ON sp.id_palabra = p.id_palabra
-JOIN sena_definicion sd   ON sd.id_sena = sp.id_sena
-JOIN definicion d         ON d.id_definicion = sd.id_definicion
-JOIN sena_diccionario sdc ON sdc.id_sena = sp.id_sena
+JOIN sena_palabra sp    ON sp.id_palabra = p.id_palabra
+JOIN sena_glosa sg      ON sg.id_sena = sp.id_sena
+JOIN glosa g            ON g.id_glosa = sg.id_glosa
+JOIN sena_definicion sd ON sd.id_sena = sp.id_sena
+JOIN definicion d       ON d.id_definicion = sd.id_definicion
 WHERE LOWER(p.palabra) = LOWER('Banco')
   AND d.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Español');
 
 -- A6. Palabras con varias señas (variantes A/B o sentidos distintos)
 SELECT p.palabra, COUNT(*) AS num_senas,
-       STRING_AGG(sdc.datos_fonologicos ->> 'codigo', ', ' ORDER BY sdc.datos_fonologicos ->> 'codigo') AS codigos
+       STRING_AGG(g.glosa, ', ' ORDER BY g.glosa) AS glosas
 FROM palabra p
-JOIN sena_palabra sp      ON sp.id_palabra = p.id_palabra
-JOIN sena_diccionario sdc ON sdc.id_sena = sp.id_sena
+JOIN sena_palabra sp ON sp.id_palabra = p.id_palabra
+JOIN sena_glosa sg   ON sg.id_sena = sp.id_sena
+JOIN glosa g         ON g.id_glosa = sg.id_glosa
 GROUP BY p.palabra
 HAVING COUNT(*) > 1
 ORDER BY num_senas DESC, p.palabra;
 
 -- A7. Sinónimos: palabras que comparten la misma seña
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
+SELECT g.glosa,
        STRING_AGG(p.palabra, ' / ' ORDER BY p.palabra) AS palabras
-FROM sena_diccionario sdc
-JOIN sena_palabra sp ON sp.id_sena = sdc.id_sena
+FROM glosa g
+JOIN sena_glosa sg   ON sg.id_glosa = g.id_glosa
+JOIN sena_palabra sp ON sp.id_sena = sg.id_sena
 JOIN palabra p       ON p.id_palabra = sp.id_palabra
-GROUP BY sdc.id_sena, codigo
+GROUP BY g.glosa
 HAVING COUNT(*) > 1
-ORDER BY COUNT(*) DESC, codigo;
+ORDER BY COUNT(*) DESC, g.glosa;
 
 -- =====================================================================
 -- B. LENGUAS
@@ -95,13 +110,15 @@ ORDER BY COUNT(*) DESC, codigo;
 
 -- B1. [VACÍA HOY: falta cargar una segunda lengua de señas, p. ej. ASL]
 --     Equivalente en otra lengua de señas por palabra compartida
-SELECT DISTINCT a.datos_fonologicos ->> 'codigo' AS lsm, b.datos_fonologicos ->> 'codigo' AS otra, p.palabra
-FROM sena_diccionario a
-JOIN sena_palabra sp1 ON sp1.id_sena = a.id_sena
+SELECT DISTINCT g1.glosa AS lsm, g2.glosa AS otra, p.palabra
+FROM sena_glosa sg1
+JOIN glosa g1         ON g1.id_glosa = sg1.id_glosa
+JOIN sena_palabra sp1 ON sp1.id_sena = sg1.id_sena
 JOIN palabra p        ON p.id_palabra = sp1.id_palabra
 JOIN sena_palabra sp2 ON sp2.id_palabra = p.id_palabra AND sp2.id_sena <> sp1.id_sena
 JOIN sena s2          ON s2.id_sena = sp2.id_sena
-JOIN sena_diccionario b ON b.id_sena = s2.id_sena
+JOIN sena_glosa sg2   ON sg2.id_sena = s2.id_sena
+JOIN glosa g2         ON g2.id_glosa = sg2.id_glosa
 WHERE s2.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'American Sign Language');
 
 -- B2. Señas por lengua de señas
@@ -135,18 +152,22 @@ ORDER BY num_senas DESC;
 
 -- C3. Contenido del diccionario por página del PDF
 SELECT (sdc.datos_fonologicos ->> 'pagina')::int AS pagina,
-       sdc.datos_fonologicos ->> 'codigo'        AS codigo,
+       g.glosa,
        sdc.datos_fonologicos ->> 'significado'   AS significado
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE (sdc.datos_fonologicos ->> 'pagina')::int BETWEEN 1 AND 2
 ORDER BY pagina, sdc.id_sena;
 
 -- C4. [VACÍA HOY: hace falta un segundo diccionario]
 --     Misma seña con datos fonológicos distintos entre diccionarios
-SELECT a.id_sena, k AS parametro,
+SELECT g.glosa, k AS parametro,
        a.datos_fonologicos ->> k AS valor_a, b.datos_fonologicos ->> k AS valor_b
 FROM sena_diccionario a
 JOIN sena_diccionario b ON b.id_sena = a.id_sena AND b.id_diccionario > a.id_diccionario
+JOIN sena_glosa sg      ON sg.id_sena = a.id_sena
+JOIN glosa g            ON g.id_glosa = sg.id_glosa
 CROSS JOIN LATERAL (SELECT jsonb_object_keys(a.datos_fonologicos || b.datos_fonologicos) AS k) keys
 WHERE a.datos_fonologicos -> k IS DISTINCT FROM b.datos_fonologicos -> k;
 
@@ -157,43 +178,48 @@ FROM sena_diccionario sdc
 GROUP BY 1
 ORDER BY 2 DESC;
 
--- C6. Buscar una seña por su código
-SELECT jsonb_pretty(sdc.datos_fonologicos) AS datos_fonologicos
-FROM sena_diccionario sdc
-WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 3';
+-- C6. Ver el JSON completo de una seña por su glosa
+SELECT g.glosa, jsonb_pretty(sdc.datos_fonologicos) AS datos_fonologicos
+FROM glosa g
+JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
+JOIN sena_diccionario sdc ON sdc.id_sena = sg.id_sena
+WHERE g.glosa = 'Y-ESO';
 
 -- =====================================================================
 -- D. FONOLOGÍA (datos_fonologicos)
 -- =====================================================================
 
 -- D1. Señas con una configuración exacta
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado,
-       sdc.datos_fonologicos ->> 'ubicacion'   AS ubicacion
+SELECT g.glosa, sdc.datos_fonologicos ->> 'ubicacion' AS ubicacion
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos @> '{"configuracion": "B-P.2"}'
-ORDER BY codigo;
+ORDER BY g.glosa;
 
 -- D2. Varias condiciones a la vez (usa el índice GIN)
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado
+SELECT g.glosa
 FROM sena_diccionario sdc
-WHERE sdc.datos_fonologicos @> '{"configuracion": "A.1", "ubicacion": "A la altura del pecho."}';
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
+WHERE sdc.datos_fonologicos @> '{"configuracion": "A.1", "ubicacion": "A la altura del pecho."}'
+ORDER BY g.glosa;
 
 -- D3. Búsqueda de texto dentro de un parámetro (configuraciones que usan B-P.2)
-SELECT sdc.datos_fonologicos ->> 'codigo'        AS codigo,
-       sdc.datos_fonologicos ->> 'significado'   AS significado,
-       sdc.datos_fonologicos ->> 'configuracion' AS configuracion
+SELECT g.glosa, sdc.datos_fonologicos ->> 'configuracion' AS configuracion
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ->> 'configuracion' ILIKE '%B-P.2%'
-ORDER BY codigo;
+ORDER BY g.glosa;
 
 -- D4. Rasgos no manuales que mencionan las cejas
-SELECT sdc.datos_fonologicos ->> 'significado'        AS significado,
-       sdc.datos_fonologicos ->> 'rasgos_no_manuales' AS rasgos
+SELECT g.glosa, sdc.datos_fonologicos ->> 'rasgos_no_manuales' AS rasgos
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ->> 'rasgos_no_manuales' ILIKE '%ceja%'
-ORDER BY significado;
+ORDER BY g.glosa;
 
 -- D5. Frecuencia de cada configuración
 SELECT sdc.datos_fonologicos ->> 'configuracion' AS configuracion, COUNT(*) AS num_senas
@@ -211,16 +237,16 @@ ORDER BY 2 DESC, 1;
 --     Compara el texto exacto de configuración, ubicación, movimiento y orientación;
 --     como son descripciones libres, es una aproximación.
 WITH f AS (
-    SELECT sdc.id_sena,
-           sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-           sdc.datos_fonologicos ->> 'significado' AS significado,
+    SELECT sdc.id_sena, g.glosa,
            COALESCE(sdc.datos_fonologicos ->> 'configuracion', '') AS c,
            COALESCE(sdc.datos_fonologicos ->> 'ubicacion', '')     AS u,
            COALESCE(sdc.datos_fonologicos ->> 'movimiento', '')    AS m,
            COALESCE(sdc.datos_fonologicos ->> 'orientacion', '')   AS o
     FROM sena_diccionario sdc
+    JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+    JOIN glosa g       ON g.id_glosa = sg.id_glosa
 )
-SELECT a.significado AS sena_a, b.significado AS sena_b,
+SELECT a.glosa AS sena_a, b.glosa AS sena_b,
        CASE WHEN a.c <> b.c THEN 'configuracion: ' || a.c || ' / ' || b.c
             WHEN a.u <> b.u THEN 'ubicacion: '     || a.u || ' / ' || b.u
             WHEN a.m <> b.m THEN 'movimiento: '    || a.m || ' / ' || b.m
@@ -253,14 +279,14 @@ GROUP BY 1
 ORDER BY 2 DESC;
 
 -- E2. Señas compuestas (SC) con el tipo de cada parte
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado,
-       sdc.datos_fonologicos ->> 'tipo_sena'   AS partes
+SELECT g.glosa, sdc.datos_fonologicos ->> 'tipo_sena' AS partes
 FROM sena s
 JOIN tipo_sena t          ON t.id_tipo_sena = s.id_tipo
 JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
+JOIN sena_glosa sg        ON sg.id_sena = s.id_sena
+JOIN glosa g              ON g.id_glosa = sg.id_glosa
 WHERE t.tipo = 'SC'
-ORDER BY codigo;
+ORDER BY g.glosa;
 
 -- E3. Combinaciones de partes en las señas compuestas
 SELECT sdc.datos_fonologicos ->> 'tipo_sena' AS partes, COUNT(*) AS num_senas
@@ -278,13 +304,14 @@ ORDER BY 2 DESC;
 
 -- F1. [VACÍA HOY: no hay videos]
 --     Videos de una seña, con su señante
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, v.path, v.tipo_de_toma, v.mano_dominante,
-       st.id_senante, st.perfil_nativo
-FROM sena_diccionario sdc
-JOIN sena_video sv ON sv.id_sena_diccionario = sdc.id_sena_diccionario
-JOIN video v       ON v.id_video = sv.id_video
-JOIN senante st    ON st.id_senante = v.id_senante
-WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 3';
+SELECT g.glosa, v.path, v.tipo_de_toma, v.mano_dominante, st.id_senante, st.perfil_nativo
+FROM glosa g
+JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
+JOIN sena_diccionario sdc ON sdc.id_sena = sg.id_sena
+JOIN sena_video sv        ON sv.id_sena_diccionario = sdc.id_sena_diccionario
+JOIN video v              ON v.id_video = sv.id_video
+JOIN senante st           ON st.id_senante = v.id_senante
+WHERE g.glosa = 'CASA-A';
 
 -- F2. [VACÍA HOY: no hay videos]
 --     Video de una palabra (palabra -> seña -> video)
@@ -310,11 +337,13 @@ ORDER BY st.id_senante;
 
 -- F4. [VACÍA HOY: no hay videos]
 --     Señas grabadas por 2 o más señantes (para estudiar variación)
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, COUNT(DISTINCT v.id_senante) AS num_senantes
+SELECT g.glosa, COUNT(DISTINCT v.id_senante) AS num_senantes
 FROM sena_diccionario sdc
 JOIN sena_video sv ON sv.id_sena_diccionario = sdc.id_sena_diccionario
 JOIN video v       ON v.id_video = sv.id_video
-GROUP BY 1
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
+GROUP BY g.glosa
 HAVING COUNT(DISTINCT v.id_senante) > 1;
 
 -- F5. [VACÍA HOY: no hay videos]
@@ -351,19 +380,23 @@ SELECT COUNT(*) AS senas,
 FROM sena s;
 
 -- H2. Señas sin tipo
-SELECT s.id_sena, sdc.datos_fonologicos ->> 'codigo' AS codigo, sdc.datos_fonologicos ->> 'tipo_sena' AS tipo_original
+SELECT g.glosa, sdc.datos_fonologicos ->> 'codigo' AS codigo,
+       sdc.datos_fonologicos ->> 'tipo_sena' AS tipo_original
 FROM sena s
 JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
+JOIN sena_glosa sg        ON sg.id_sena = s.id_sena
+JOIN glosa g              ON g.id_glosa = sg.id_glosa
 WHERE s.id_tipo IS NULL;
 
 -- H3. Señas sin movimiento u orientación en el diccionario
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado,
+SELECT g.glosa,
        NOT sdc.datos_fonologicos ? 'movimiento'  AS sin_movimiento,
        NOT sdc.datos_fonologicos ? 'orientacion' AS sin_orientacion
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE NOT sdc.datos_fonologicos ?& ARRAY['movimiento', 'orientacion']
-ORDER BY codigo;
+ORDER BY g.glosa;
 
 -- H4. [CONTROL: vacía = sin problemas]
 --     Palabras sin seña (todas salen del diccionario)
@@ -378,19 +411,22 @@ WHERE NOT EXISTS (SELECT 1 FROM sena_palabra sp WHERE sp.id_palabra = p.id_palab
 -- I1. [CONTROL: vacía = sin problemas]
 --     Códigos repetidos en el diccionario
 SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, COUNT(*) AS veces,
-       STRING_AGG(sdc.datos_fonologicos ->> 'significado', ' | ') AS significados
+       STRING_AGG(g.glosa, ', ' ORDER BY g.glosa) AS glosas
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 GROUP BY 1
 HAVING COUNT(*) > 1;
 
 -- I2. [CONTROL: vacía = sin problemas]
---     Significados repetidos (posibles variantes o duplicados)
-SELECT sdc.datos_fonologicos ->> 'significado' AS significado, COUNT(*) AS veces,
-       STRING_AGG(sdc.datos_fonologicos ->> 'codigo', ', ') AS codigos
-FROM sena_diccionario sdc
-GROUP BY 1
-HAVING COUNT(*) > 1
-ORDER BY significado;
+--     Glosas numeradas: el diccionario no da nada que distinga esas señas
+SELECT g.glosa, sdc.datos_fonologicos ->> 'codigo' AS codigo,
+       sdc.datos_fonologicos ->> 'significado' AS significado
+FROM glosa g
+JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
+JOIN sena_diccionario sdc ON sdc.id_sena = sg.id_sena
+WHERE g.glosa ~ '-[0-9]+$'
+ORDER BY g.glosa;
 
 -- I3. [CONTROL: vacía = sin problemas]
 --     Lengua de la entrada distinta de la lengua de la seña
@@ -400,18 +436,26 @@ JOIN sena s ON s.id_sena = sdc.id_sena
 WHERE s.id_lengua <> sdc.id_lengua;
 
 -- I4. [CONTROL: vacía = sin problemas]
---     Palabras duplicadas (misma palabra y lengua dos veces)
-SELECT LOWER(palabra) AS palabra, id_lengua, COUNT(*)
-FROM palabra
-GROUP BY LOWER(palabra), id_lengua
+--     Glosas repetidas o señas con más de una glosa
+SELECT g.glosa, COUNT(*) AS veces
+FROM glosa g
+JOIN sena_glosa sg ON sg.id_glosa = g.id_glosa
+GROUP BY g.glosa
+HAVING COUNT(*) > 1
+UNION ALL
+SELECT 'seña ' || sg.id_sena, COUNT(*)
+FROM sena_glosa sg
+GROUP BY sg.id_sena
 HAVING COUNT(*) > 1;
 
 -- I5. [CONTROL: vacía = sin problemas]
 --     Tipo de sena.id_tipo que no coincide con el tipo del JSON
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, t.tipo, sdc.datos_fonologicos ->> 'tipo_sena' AS tipo_json
+SELECT g.glosa, t.tipo, sdc.datos_fonologicos ->> 'tipo_sena' AS tipo_json
 FROM sena s
 JOIN tipo_sena t          ON t.id_tipo_sena = s.id_tipo
 JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
+JOIN sena_glosa sg        ON sg.id_sena = s.id_sena
+JOIN glosa g              ON g.id_glosa = sg.id_glosa
 WHERE t.tipo <> 'SC' AND t.tipo <> sdc.datos_fonologicos ->> 'tipo_sena';
 
 -- =====================================================================
@@ -419,7 +463,8 @@ WHERE t.tipo <> 'SC' AND t.tipo <> sdc.datos_fonologicos ->> 'tipo_sena';
 -- =====================================================================
 
 -- J1. Todo lo que se sabe de una seña en una sola fila
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
+SELECT g.glosa,
+       sdc.datos_fonologicos ->> 'codigo' AS codigo,
        l.nombre_completo AS lengua,
        t.tipo,
        (SELECT STRING_AGG(p.palabra, ', ') FROM sena_palabra x JOIN palabra p USING (id_palabra) WHERE x.id_sena = s.id_sena) AS palabras,
@@ -428,44 +473,50 @@ SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
        sdc.datos_fonologicos ->> 'configuracion' AS configuracion,
        sdc.datos_fonologicos ->> 'ubicacion'     AS ubicacion,
        sdc.datos_fonologicos ->> 'movimiento'    AS movimiento
-FROM sena s
+FROM glosa g
+JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
+JOIN sena s               ON s.id_sena = sg.id_sena
 JOIN lengua l             ON l.id_lengua = s.id_lengua
 LEFT JOIN tipo_sena t     ON t.id_tipo_sena = s.id_tipo
 JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
 JOIN diccionario dic      ON dic.id_diccionario = sdc.id_diccionario
-WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 4';
+WHERE g.glosa = 'ABAJO';
 
 -- =====================================================================
 -- K. TEMAS DEL DICCIONARIO
 -- =====================================================================
 
 -- K1. Señas con nota cultural
-SELECT sdc.datos_fonologicos ->> 'significado'   AS significado,
-       sdc.datos_fonologicos ->> 'nota_cultural' AS nota_cultural
+SELECT g.glosa, sdc.datos_fonologicos ->> 'nota_cultural' AS nota_cultural
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ? 'nota_cultural'
-ORDER BY significado;
+ORDER BY g.glosa;
 
 -- K2. Señas con representación (qué imitan)
-SELECT sdc.datos_fonologicos ->> 'significado'    AS significado,
-       sdc.datos_fonologicos ->> 'representacion' AS representacion
+SELECT g.glosa, sdc.datos_fonologicos ->> 'representacion' AS representacion
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ? 'representacion'
-ORDER BY significado;
+ORDER BY g.glosa;
 
 -- K3. Estaciones del Metro (STC Metro)
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado
+SELECT g.glosa, sdc.datos_fonologicos ->> 'significado' AS significado
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ->> 'significado' LIKE '%(STC Metro)%'
-ORDER BY codigo;
+ORDER BY g.glosa;
 
 -- K4. Señas de lugares internacionales (SSI)
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado
+SELECT g.glosa, sdc.datos_fonologicos ->> 'significado' AS significado
 FROM sena_diccionario sdc
-WHERE sdc.datos_fonologicos ->> 'significado' LIKE '%(SSI)%'
-ORDER BY codigo;
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
+WHERE sdc.datos_fonologicos ->> 'significado' ~ '\(SS[Il]\)'
+ORDER BY g.glosa;
 
 -- K5. Señas por categoría gramatical (inicio de la definición: sust., v., adj., adv., ...)
 SELECT COALESCE(LOWER(SUBSTRING(d.definicion FROM '^\d?\.?\s*([a-zA-Z]+\.)')), '(otro)') AS categoria,
@@ -475,9 +526,10 @@ GROUP BY 1
 ORDER BY 2 DESC;
 
 -- K6. Búsqueda libre en las definiciones
-SELECT sdc.datos_fonologicos ->> 'significado' AS significado, d.definicion
+SELECT g.glosa, d.definicion
 FROM definicion d
-JOIN sena_definicion x    ON x.id_definicion = d.id_definicion
-JOIN sena_diccionario sdc ON sdc.id_sena = x.id_sena
+JOIN sena_definicion x ON x.id_definicion = d.id_definicion
+JOIN sena_glosa sg     ON sg.id_sena = x.id_sena
+JOIN glosa g           ON g.id_glosa = sg.id_glosa
 WHERE d.definicion ILIKE '%comida%'
-ORDER BY significado;
+ORDER BY g.glosa;

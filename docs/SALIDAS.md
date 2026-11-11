@@ -25,50 +25,54 @@ Cada consulta muestra hasta 20 filas; las celdas largas se recortan. El SQL comp
 
 ## A. Palabras, traducción y definiciones
 
-### <a id="a1"></a>A1. Seña(s) de una palabra, con su código y significado en el diccionario
+### <a id="a1"></a>A1. Seña(s) de una palabra: su glosa y su código en el diccionario
 
 <details><summary>SQL</summary>
 
 ```sql
-SELECT p.palabra,
-       sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado
+SELECT p.palabra, g.glosa,
+       sdc.datos_fonologicos ->> 'codigo' AS codigo
 FROM palabra p
 JOIN sena_palabra sp      ON sp.id_palabra = p.id_palabra
+JOIN sena_glosa sg        ON sg.id_sena = sp.id_sena
+JOIN glosa g              ON g.id_glosa = sg.id_glosa
 JOIN sena_diccionario sdc ON sdc.id_sena = sp.id_sena
-WHERE LOWER(p.palabra) = LOWER('Casa');
+WHERE LOWER(p.palabra) = LOWER('Casa')
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| palabra | codigo | significado |
+| palabra | glosa | codigo |
 |---|---|---|
-| Casa | B-P 107 | Casa (A) |
-| Casa | B-P 108 | Casa (B) |
+| Casa | CASA-A | B-P 107 |
+| Casa | CASA-B | B-P 108 |
 
 *2 filas.*
 
-### <a id="a2"></a>A2. Todas las palabras ligadas a una seña (por código)
+### <a id="a2"></a>A2. Todas las palabras de una glosa, con su idioma
 
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, p.palabra, l.nombre_completo AS idioma
-FROM sena_diccionario sdc
-JOIN sena_palabra sp ON sp.id_sena = sdc.id_sena
+SELECT g.glosa, p.palabra, l.nombre_completo AS idioma
+FROM glosa g
+JOIN sena_glosa sg   ON sg.id_glosa = g.id_glosa
+JOIN sena_palabra sp ON sp.id_sena = sg.id_sena
 JOIN palabra p       ON p.id_palabra = sp.id_palabra
 JOIN lengua l        ON l.id_lengua = p.id_lengua
-WHERE sdc.datos_fonologicos ->> 'codigo' = '5-G 51';
+WHERE g.glosa = 'BONITO'
+ORDER BY p.palabra;
 ```
 
 </details>
 
-| codigo | palabra | idioma |
+| glosa | palabra | idioma |
 |---|---|---|
-| 5-G 51 | Belleza | Español |
-| 5-G 51 | Bello | Español |
-| 5-G 51 | Bonito | Español |
-| 5-G 51 | Lindo | Español |
+| BONITO | Belleza | Español |
+| BONITO | Bello | Español |
+| BONITO | Bonito | Español |
+| BONITO | Lindo | Español |
 
 *4 filas.*
 
@@ -77,10 +81,12 @@ WHERE sdc.datos_fonologicos ->> 'codigo' = '5-G 51';
 <details><summary>SQL</summary>
 
 ```sql
-SELECT DISTINCT origen.palabra AS espanol, destino.palabra AS ingles
+SELECT DISTINCT origen.palabra AS espanol, g.glosa, destino.palabra AS ingles
 FROM palabra origen
 JOIN sena_palabra sp1 ON sp1.id_palabra = origen.id_palabra
-JOIN sena_palabra sp2 ON sp2.id_sena    = sp1.id_sena
+JOIN sena_glosa sg    ON sg.id_sena = sp1.id_sena
+JOIN glosa g          ON g.id_glosa = sg.id_glosa
+JOIN sena_palabra sp2 ON sp2.id_sena = sp1.id_sena
 JOIN palabra destino  ON destino.id_palabra = sp2.id_palabra
 WHERE LOWER(origen.palabra) = LOWER('Casa')
   AND origen.id_lengua  = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Español')
@@ -96,12 +102,14 @@ WHERE LOWER(origen.palabra) = LOWER('Casa')
 <details><summary>SQL</summary>
 
 ```sql
-SELECT DISTINCT p.palabra, d.definicion
+SELECT DISTINCT p.palabra, g.glosa, d.definicion
 FROM palabra p
 JOIN sena_palabra sp    ON sp.id_palabra = p.id_palabra
-JOIN sena_definicion sd ON sd.id_sena    = sp.id_sena
+JOIN sena_glosa sg      ON sg.id_sena = sp.id_sena
+JOIN glosa g            ON g.id_glosa = sg.id_glosa
+JOIN sena_definicion sd ON sd.id_sena = sp.id_sena
 JOIN definicion d       ON d.id_definicion = sd.id_definicion
-WHERE LOWER(p.palabra) = LOWER('Hola')
+WHERE LOWER(p.palabra) = LOWER('Banco')
   AND p.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Español')
   AND d.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Inglés');
 ```
@@ -115,21 +123,22 @@ WHERE LOWER(p.palabra) = LOWER('Hola')
 <details><summary>SQL</summary>
 
 ```sql
-SELECT p.palabra, sdc.datos_fonologicos ->> 'codigo' AS codigo, d.definicion
+SELECT p.palabra, g.glosa, d.definicion
 FROM palabra p
-JOIN sena_palabra sp      ON sp.id_palabra = p.id_palabra
-JOIN sena_definicion sd   ON sd.id_sena = sp.id_sena
-JOIN definicion d         ON d.id_definicion = sd.id_definicion
-JOIN sena_diccionario sdc ON sdc.id_sena = sp.id_sena
+JOIN sena_palabra sp    ON sp.id_palabra = p.id_palabra
+JOIN sena_glosa sg      ON sg.id_sena = sp.id_sena
+JOIN glosa g            ON g.id_glosa = sg.id_glosa
+JOIN sena_definicion sd ON sd.id_sena = sp.id_sena
+JOIN definicion d       ON d.id_definicion = sd.id_definicion
 WHERE LOWER(p.palabra) = LOWER('Banco')
   AND d.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'Español');
 ```
 
 </details>
 
-| palabra | codigo | definicion |
+| palabra | glosa | definicion |
 |---|---|---|
-| Banco | B-P 62 | sust. m. Institución que realiza las múltiples operaciones comerciales a que da lugar el dinero y los títulos que lo representan, como inversiones, créditos, ahorros, pagos, etc. |
+| Banco | BANCO | sust. m. Institución que realiza las múltiples operaciones comerciales a que da lugar el dinero y los títulos que lo representan, como inversiones, créditos, ahorros, pagos, etc. |
 
 *1 fila.*
 
@@ -139,10 +148,11 @@ WHERE LOWER(p.palabra) = LOWER('Banco')
 
 ```sql
 SELECT p.palabra, COUNT(*) AS num_senas,
-       STRING_AGG(sdc.datos_fonologicos ->> 'codigo', ', ' ORDER BY sdc.datos_fonologicos ->> 'codigo') AS codigos
+       STRING_AGG(g.glosa, ', ' ORDER BY g.glosa) AS glosas
 FROM palabra p
-JOIN sena_palabra sp      ON sp.id_palabra = p.id_palabra
-JOIN sena_diccionario sdc ON sdc.id_sena = sp.id_sena
+JOIN sena_palabra sp ON sp.id_palabra = p.id_palabra
+JOIN sena_glosa sg   ON sg.id_sena = sp.id_sena
+JOIN glosa g         ON g.id_glosa = sg.id_glosa
 GROUP BY p.palabra
 HAVING COUNT(*) > 1
 ORDER BY num_senas DESC, p.palabra;
@@ -150,28 +160,28 @@ ORDER BY num_senas DESC, p.palabra;
 
 </details>
 
-| palabra | num_senas | codigos |
+| palabra | num_senas | glosas |
 |---|---|---|
-| Abandonar | 6 | A-7, C-1, O-4, O-5, O-6, S-4 |
-| Convencer | 4 | B-P 130, B-P 131, B-P 132, B-P 133 |
-| Copiar | 4 | 5-G 79, 5-G 80, 5-G 81, 5-G 82 |
-| Almohada | 3 | 5-G 18, C-6, C-7 |
-| Anteriormente | 3 | B-P 35, B-P 36, B-P 37 |
-| Antes | 3 | B-P 35, B-P 36, B-P 37 |
-| Asar | 3 | 5-G 34, 5-G 35, B-P 45 |
-| Aumentar | 3 | B-P 48, L-8, L-9 |
-| Descubrir | 3 | L-31, L-32, L-33 |
-| Grave | 3 | L-68, L-69, L-70 |
-| Libro | 3 | B-P 186, L-106, L-107 |
-| Pasado | 3 | B-P 35, B-P 36, B-P 37 |
-| Percatarse | 3 | L-31, L-32, L-33 |
-| Ya me di cuenta | 3 | L-31, L-32, L-33 |
-| Abofetear | 2 | B-P 5, B-P 6 |
-| Adiós | 2 | 5-G 8, 5-G 9 |
-| Adorar | 2 | A-21, B-P 15 |
-| Adán | 2 | A-18, A-19 |
-| Ahora | 2 | B-P 20, B-P 21 |
-| Alabanza | 2 | A-28, B-P 22 |
+| Abandonar | 6 | ABANDONAR-1, ABANDONAR-2, ABANDONAR-3, ABANDONAR-A, ABANDONAR-B, ABANDONAR-C |
+| Convencer | 4 | CONVENCER-A, CONVENCER-B, CONVENCER-C, CONVENCER-D |
+| Copiar | 4 | COPIAR-A, COPIAR-B, COPIAR-C, COPIAR-D |
+| Almohada | 3 | ALMOHADA-A, ALMOHADA-B, ALMOHADA-C |
+| Anteriormente | 3 | ANTES-A, ANTES-B, ANTES-C |
+| Antes | 3 | ANTES-A, ANTES-B, ANTES-C |
+| Asar | 3 | ASAR, ASAR-A, ASAR-B |
+| Aumentar | 3 | AUMENTAR, AUMENTAR-ELEVAR-ECONOMÍA, AUMENTAR-GANANCIA |
+| Descubrir | 3 | DESCUBRIR-A, DESCUBRIR-B, DESCUBRIR-C |
+| Grave | 3 | GRAVE-A, GRAVE-B, GRAVE-C |
+| Libro | 3 | LIBRO-A, LIBRO-B, LIBRO-C |
+| Pasado | 3 | ANTES-A, ANTES-B, ANTES-C |
+| Percatarse | 3 | DESCUBRIR-A, DESCUBRIR-B, DESCUBRIR-C |
+| Ya me di cuenta | 3 | DESCUBRIR-A, DESCUBRIR-B, DESCUBRIR-C |
+| Abofetear | 2 | ABOFETEAR-A, ABOFETEAR-B |
+| Adiós | 2 | ADIÓS-A, ADIÓS-B |
+| Adorar | 2 | ADORAR-1, ADORAR-2 |
+| Adán | 2 | ADÁN-A, ADÁN-B |
+| Ahora | 2 | AHORA-A, AHORA-B |
+| Alabanza | 2 | ALABANZA, ALABAR |
 
 *Se muestran 20 de 116 filas.*
 
@@ -180,40 +190,41 @@ ORDER BY num_senas DESC, p.palabra;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
+SELECT g.glosa,
        STRING_AGG(p.palabra, ' / ' ORDER BY p.palabra) AS palabras
-FROM sena_diccionario sdc
-JOIN sena_palabra sp ON sp.id_sena = sdc.id_sena
+FROM glosa g
+JOIN sena_glosa sg   ON sg.id_glosa = g.id_glosa
+JOIN sena_palabra sp ON sp.id_sena = sg.id_sena
 JOIN palabra p       ON p.id_palabra = sp.id_palabra
-GROUP BY sdc.id_sena, codigo
+GROUP BY g.glosa
 HAVING COUNT(*) > 1
-ORDER BY COUNT(*) DESC, codigo;
+ORDER BY COUNT(*) DESC, g.glosa;
 ```
 
 </details>
 
-| codigo | palabras |
+| glosa | palabras |
 |---|---|
-| 5-G 51 | Belleza / Bello / Bonito / Lindo |
-| A-69 | Auto / Automóvil / Carro / Coche |
-| B-P 23 | Alegría / Celebrar / Disfrutar / Divertido |
-| 5-G 19 | Alrededor / Ambiente / Contexto |
-| 5-G 33 | Aprehender / Arrestar / Detención |
-| 5-G 43 | Baloncesto / Basquetbol / Encestar |
-| 5-G 82 | Contagiar / Copiar / Imitar |
-| 5-G 87 | Arrestado / Arrestar / Detenido |
-| A-12 | Acné / Barro / Espinilla |
-| A-128 | Alternar / Intercambiar / Relevar |
-| A-159 | Casanova / Mujeriego / Promiscuo |
-| A-161 | Recarga / Saldo / Tiempo aire |
-| B-P 145 | Bloquear / Defender / Proteger |
-| B-P 149 | Correr / Despedir / Expulsar |
-| B-P 35 | Anteriormente / Antes / Pasado |
-| B-P 36 | Anteriormente / Antes / Pasado |
-| B-P 37 | Anteriormente / Antes / Pasado |
-| B-P 63 | Bandera / Pantitlán / Patriotismo |
-| C-17 | Brassier / Corpiño / Top |
-| L-26 | Con sueño / Somnoliento / Sueño |
+| ALEGRÍA | Alegría / Celebrar / Disfrutar / Divertido |
+| AUTO | Auto / Automóvil / Carro / Coche |
+| BONITO | Belleza / Bello / Bonito / Lindo |
+| ACNÉ | Acné / Barro / Espinilla |
+| ALREDEDOR | Alrededor / Ambiente / Contexto |
+| ANTES-A | Anteriormente / Antes / Pasado |
+| ANTES-B | Anteriormente / Antes / Pasado |
+| ANTES-C | Anteriormente / Antes / Pasado |
+| ARGUMENTAR | Argumentar / Debate / Discusión |
+| ARRESTAR | Aprehender / Arrestar / Detención |
+| BALONCESTO | Baloncesto / Basquetbol / Encestar |
+| BANDERA-A | Bandera / Pantitlán / Patriotismo |
+| BRASSIER | Brassier / Corpiño / Top |
+| CON-SUEÑO | Con sueño / Somnoliento / Sueño |
+| COPIAR-D | Contagiar / Copiar / Imitar |
+| DE-TODOS-MODOS | De todas formas / De todas maneras / De todos modos |
+| DEFENDER-B | Bloquear / Defender / Proteger |
+| DESCUBRIR-A | Descubrir / Percatarse / Ya me di cuenta |
+| DESCUBRIR-B | Descubrir / Percatarse / Ya me di cuenta |
+| DESCUBRIR-C | Descubrir / Percatarse / Ya me di cuenta |
 
 *Se muestran 20 de 219 filas.*
 
@@ -224,13 +235,15 @@ ORDER BY COUNT(*) DESC, codigo;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT DISTINCT a.datos_fonologicos ->> 'codigo' AS lsm, b.datos_fonologicos ->> 'codigo' AS otra, p.palabra
-FROM sena_diccionario a
-JOIN sena_palabra sp1 ON sp1.id_sena = a.id_sena
+SELECT DISTINCT g1.glosa AS lsm, g2.glosa AS otra, p.palabra
+FROM sena_glosa sg1
+JOIN glosa g1         ON g1.id_glosa = sg1.id_glosa
+JOIN sena_palabra sp1 ON sp1.id_sena = sg1.id_sena
 JOIN palabra p        ON p.id_palabra = sp1.id_palabra
 JOIN sena_palabra sp2 ON sp2.id_palabra = p.id_palabra AND sp2.id_sena <> sp1.id_sena
 JOIN sena s2          ON s2.id_sena = sp2.id_sena
-JOIN sena_diccionario b ON b.id_sena = s2.id_sena
+JOIN sena_glosa sg2   ON sg2.id_sena = s2.id_sena
+JOIN glosa g2         ON g2.id_glosa = sg2.id_glosa
 WHERE s2.id_lengua = (SELECT id_lengua FROM lengua WHERE nombre_completo = 'American Sign Language');
 ```
 
@@ -324,23 +337,25 @@ ORDER BY num_senas DESC;
 
 ```sql
 SELECT (sdc.datos_fonologicos ->> 'pagina')::int AS pagina,
-       sdc.datos_fonologicos ->> 'codigo'        AS codigo,
+       g.glosa,
        sdc.datos_fonologicos ->> 'significado'   AS significado
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE (sdc.datos_fonologicos ->> 'pagina')::int BETWEEN 1 AND 2
 ORDER BY pagina, sdc.id_sena;
 ```
 
 </details>
 
-| pagina | codigo | significado |
+| pagina | glosa | significado |
 |---|---|---|
-| 1 | B-P 1 | ¿Por qué? |
-| 1 | B-P 2 | ¿Qué onda? |
-| 1 | B-P 3 | ¿Y eso? |
-| 2 | B-P 4 | Abajo – Debajo |
-| 2 | B-P 5 | Abofetear (A) |
-| 2 | B-P 6 | Abofetear (B) |
+| 1 | POR-QUÉ | ¿Por qué? |
+| 1 | QUÉ-ONDA | ¿Qué onda? |
+| 1 | Y-ESO | ¿Y eso? |
+| 2 | ABAJO | Abajo – Debajo |
+| 2 | ABOFETEAR-A | Abofetear (A) |
+| 2 | ABOFETEAR-B | Abofetear (B) |
 
 *6 filas.*
 
@@ -349,10 +364,12 @@ ORDER BY pagina, sdc.id_sena;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT a.id_sena, k AS parametro,
+SELECT g.glosa, k AS parametro,
        a.datos_fonologicos ->> k AS valor_a, b.datos_fonologicos ->> k AS valor_b
 FROM sena_diccionario a
 JOIN sena_diccionario b ON b.id_sena = a.id_sena AND b.id_diccionario > a.id_diccionario
+JOIN sena_glosa sg      ON sg.id_sena = a.id_sena
+JOIN glosa g            ON g.id_glosa = sg.id_glosa
 CROSS JOIN LATERAL (SELECT jsonb_object_keys(a.datos_fonologicos || b.datos_fonologicos) AS k) keys
 WHERE a.datos_fonologicos -> k IS DISTINCT FROM b.datos_fonologicos -> k;
 ```
@@ -387,21 +404,23 @@ ORDER BY 2 DESC;
 
 *7 filas.*
 
-### <a id="c6"></a>C6. Buscar una seña por su código
+### <a id="c6"></a>C6. Ver el JSON completo de una seña por su glosa
 
 <details><summary>SQL</summary>
 
 ```sql
-SELECT jsonb_pretty(sdc.datos_fonologicos) AS datos_fonologicos
-FROM sena_diccionario sdc
-WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 3';
+SELECT g.glosa, jsonb_pretty(sdc.datos_fonologicos) AS datos_fonologicos
+FROM glosa g
+JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
+JOIN sena_diccionario sdc ON sdc.id_sena = sg.id_sena
+WHERE g.glosa = 'Y-ESO';
 ```
 
 </details>
 
-| datos_fonologicos |
-|---|
-| { "codigo": "B-P 3", "pagina": 1, "tipo_sena": "SC: I. SM; II. SB", "ubicacion": "I. La mano inicia sobre el pecho y se desliza hacia enfrente; II. Del pecho al rostro.", "definic… |
+| glosa | datos_fonologicos |
+|---|---|
+| Y-ESO | { "codigo": "B-P 3", "pagina": 1, "tipo_sena": "SC: I. SM; II. SB", "ubicacion": "I. La mano inicia sobre el pecho y se desliza hacia enfrente; II. Del pecho al rostro.", "definic… |
 
 *1 fila.*
 
@@ -412,38 +431,38 @@ WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 3';
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado,
-       sdc.datos_fonologicos ->> 'ubicacion'   AS ubicacion
+SELECT g.glosa, sdc.datos_fonologicos ->> 'ubicacion' AS ubicacion
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos @> '{"configuracion": "B-P.2"}'
-ORDER BY codigo;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| codigo | significado | ubicacion |
-|---|---|---|
-| 5-G 7 | Acusar (vas a ver) | A la altura del hombro. |
-| B-P 10 | Abrir mente (mente abierta) | A Ia altura de la frente. |
-| B-P 103 | Calma | Del pecho a la cintura. |
-| B-P 104 | Camote | Sobre el cuello y se desliza hacia el pecho. |
-| B-P 110 | Ceder el paso | A la altura del pecho del centro al lado izquierdo. |
-| B-P 114 | Clavado | A la altura del pecho. |
-| B-P 115 | Clóset (A) | A la altura de los hombros. |
-| B-P 124 | Confesar 1 / Confesión 2 (B) | Sobre el pecho. |
-| B-P 125 | Confiar 1 / Confianza 2 | Sobre el pecho. |
-| B-P 13 | Activo, -a | Sobre la frente. |
-| B-P 130 | Convencer (A) | Del pecho al cuello. |
-| B-P 131 | Convencer (B) | MD y MB a la altura del cuello. |
-| B-P 143 | Dadivoso, sa | A la altura del plexo, MD sobre MB. |
-| B-P 145 | Defender – Proteger 1 (B) / Bloquear 2 | A la altura de los hombros. MD delante de MB. |
-| B-P 147 | Delfín | A la altura del pecho. del lado derecho al izquierdo. |
-| B-P 148 | Despedir 1 - Correr 2 (A) | Del hombro al rostro. |
-| B-P 15 | Adorar | Del rostro a la cintura. |
-| B-P 151 | Dieta | Del pecho a la cadera. |
-| B-P 152 | Distraído, da 1 / Distraer 2 | A la altura del cuello. |
-| B-P 154 | Doble cara – Hipócrita | De la barbilla a la nuca. |
+| glosa | ubicacion |
+|---|---|
+| ABOFETEAR-B | A la altura de la mejilla. |
+| ABRAZAR | Sobre el pecho. |
+| ABRIR-A | Del centro del cuello a los hombros. |
+| ABRIR-MENTE | A Ia altura de la frente. |
+| ACTIVO | Sobre la frente. |
+| ACUSAR | A la altura del hombro. |
+| ADORAR-1 | Del rostro a la cintura. |
+| AEROPUERTO | De los hombros a la cabeza, del centro a los lados. |
+| AHORA-A | A la altura del pecho. |
+| ALABAR | A la altura del rostro. |
+| ALEGRÍA | Sobre el pecho. |
+| ALTO-1 | A la altura del pecho. |
+| ANDAR | A la altura del pecho. |
+| ANIMAR | A la altura del pecho. |
+| APLAZAR | A la altura del pecho. |
+| AYUNAR | A la altura de la boca del lado derecho al izquierdo. |
+| BARCO | A la altura del pecho; las puntas de los dedos se tocan. |
+| BAÑO | Sobre el pecho y se desliza hacia el abdomen. |
+| BIEN | Sobre la barbilla. |
+| BOSTEZAR | A la altura de la boca. |
 
 *Se muestran 20 de 58 filas.*
 
@@ -452,29 +471,31 @@ ORDER BY codigo;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado
+SELECT g.glosa
 FROM sena_diccionario sdc
-WHERE sdc.datos_fonologicos @> '{"configuracion": "A.1", "ubicacion": "A la altura del pecho."}';
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
+WHERE sdc.datos_fonologicos @> '{"configuracion": "A.1", "ubicacion": "A la altura del pecho."}'
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| codigo | significado |
-|---|---|
-| A-5 | A salvo |
-| A-2 | ¡Excelente! |
-| A-30 | Alcohólicos Anónimos |
-| A-43 | Antiguo, gua 1 / Antiguamente 2 |
-| A-55 | Arroba |
-| A-62 | Asociación |
-| A-88 | Canadá (B) (SSI) |
-| A-103 | Con |
-| A-110 | Contigo (B) |
-| A-117 | Eludir |
-| A-149 | Pan |
-| A-163 | Relación sexual 1 / Apareamiento 2 |
-| A-169 | Separar – Terminar (relación de novios) |
+| glosa |
+|---|
+| A-SALVO |
+| ALCOHÓLICOS-ANÓNIMOS |
+| ANTIGUO |
+| ARROBA |
+| ASOCIACIÓN |
+| CANADÁ-B |
+| CON |
+| CONTIGO-B |
+| ELUDIR |
+| EXCELENTE |
+| PAN |
+| RELACIÓN-SEXUAL |
+| SEPARAR-2 |
 
 *13 filas.*
 
@@ -483,38 +504,38 @@ WHERE sdc.datos_fonologicos @> '{"configuracion": "A.1", "ubicacion": "A la altu
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo'        AS codigo,
-       sdc.datos_fonologicos ->> 'significado'   AS significado,
-       sdc.datos_fonologicos ->> 'configuracion' AS configuracion
+SELECT g.glosa, sdc.datos_fonologicos ->> 'configuracion' AS configuracion
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ->> 'configuracion' ILIKE '%B-P.2%'
-ORDER BY codigo;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| codigo | significado | configuracion |
-|---|---|---|
-| 5-G 105 | Reunión (Isla de Francia) (SSI) | MD seña que pasa de 5.1 a S.1, MB B-P.2, S.1 |
-| 5-G 34 | Asar (A) | MD 5.1, MB B-P.2 |
-| 5-G 48 | Bloqueador solar | I. 5.1; II. MD B-P.2, MB B-P.1; 5.10III. MD y MB B-P.1 |
-| 5-G 53 | Bosque 1 / Popotla 2 (STC Metro) | MD 5.1, MB B-P.2 |
-| 5-G 59 | Calculadora | MD 5.13, MB B-P.2 |
-| 5-G 7 | Acusar (vas a ver) | B-P.2 |
-| 5-G 85 | De contado | I. MD 5.25, MB B-P.2; II. MD 5.12, MB B-P.2 |
-| 5-G 87 | Detenido, -a – Arrestado, -a 1 / Arrestar 2 | I. Seña que pasa de 5.16 a S.1; II. MD S.1, MB B-P.2; III. MD y MB 5.1 |
-| 5-G 96 | Palacio de los Deportes | I. MD 5.16, MB B-P.2; II. MD y MB D.2 |
-| 5-G 97 | Pantera | I. 5.18; II. MD U.3, MB B-P.2 |
-| A-100 | Ciudad de México | I. MD A.1, MB B-P.2; II. 2.1 |
-| A-125 | Huella | MD A.1, MB B-P.2 |
-| A-129 | Irán (SSI) | MD A.1, MB B-P.2 |
-| A-13 | Acta | MD A.1, MB B-P.2 |
-| A-137 | Marca | MD A.1, MB B-P.2 |
-| A-14 | Acta de demanda 1 2 | I. MD A.1, MB B-P.2; II. MD y MB B-P.2 |
-| A-141 | Mensualidad 1 / Mensual 2 | MD A.1, MB B-P.2 |
-| A-142 | Mes | MD A.1, MB B-P.2 |
-| A-143 | Mesa (B) | MD A.1, MB B-P.2 |
-| A-15 | Acta de nacimiento | I. MD A.1, MB B-P.2; II. B-P.7 |
+| glosa | configuracion |
+|---|---|
+| ABANDONAR-3 | MD y MB seña que pasa de C.7 a B-P.2 |
+| ABOFETEAR-A | MD B-P.2, MB 1.1 |
+| ABOFETEAR-B | B-P.2 |
+| ABONO | MD y MB B-P.2 |
+| ABRAZAR | B-P.2 |
+| ABRIR-A | B-P.2 |
+| ABRIR-MENTE | B-P.2 |
+| ACCESO | MD y MB B-P.2 |
+| ACTA | MD A.1, MB B-P.2 |
+| ACTA-DE-DEMANDA | I. MD A.1, MB B-P.2; II. MD y MB B-P.2 |
+| ACTA-DE-NACIMIENTO | I. MD A.1, MB B-P.2; II. B-P.7 |
+| ACTIVO | B-P.2 |
+| ACUSAR | B-P.2 |
+| ADORAR-1 | B-P.2 |
+| AEROPUERTO | B-P.2 |
+| AFUERA | Seña que pasa de B-P.2 a B-P.8 y a B-P.2 |
+| AGENDA-B | I. B-P. 2; II. MD O.4, MB B-P.2; III. 5.1 |
+| AHORA-A | B-P.2 |
+| AHORA-B | MD y MB B-P.2 |
+| ALABANZA | I. A.1; II. B-P.2 |
 
 *Se muestran 20 de 247 filas.*
 
@@ -523,31 +544,32 @@ ORDER BY codigo;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'significado'        AS significado,
-       sdc.datos_fonologicos ->> 'rasgos_no_manuales' AS rasgos
+SELECT g.glosa, sdc.datos_fonologicos ->> 'rasgos_no_manuales' AS rasgos
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ->> 'rasgos_no_manuales' ILIKE '%ceja%'
-ORDER BY significado;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| significado | rasgos |
+| glosa | rasgos |
 |---|---|
-| Abarrotado, da | Cejas hacia arriba, mejillas infladas. |
-| Aprovecharse de | Cejas hacia arriba, ojos abiertos, boca abierta mostrando los dientes. |
-| Asalto (A) | Cabeza hacia atrás, cejas hacia arriba, boca abierta y mostrando los dientes. |
-| Ceder el paso | Cejas hacia arriba, cabeza ladeada hacia la derecha. |
-| Confirmación | Cejas hacia arriba, se esboza una sonrisa. |
-| Descubrir 1 / Ya me di cuenta – Percatarse 2 (A) | Cejas hacia arriba, boca abierta. |
-| Difundir | Cabeza atrás, cejas arriba. |
-| No gustar | Cejas hacia arriba, ceño fruncido. |
-| Patrulla | Cejas hacia arriba, ojos inusualmente abiertos, mejillas infladas. |
-| Prender – Encender | Cejas hacia arriba. |
-| ¡Qué padre! – ¡Qué chido! | Cabeza inclinada, cejas hacia arriba, boca semiabierta. |
-| ¿Cuántos? (A) | Cabeza hacia atrás, ceño fruncido, cejas arriba. |
-| ¿Cuántos? (B) | Cabeza hacia atrás, ceño fruncido, cejas arriba. |
-| ¿Y eso? | Cejas hacia arriba, comisuras de los labios ligeramente hacia abajo. |
+| ABARROTADO | Cejas hacia arriba, mejillas infladas. |
+| APROVECHARSE-DE | Cejas hacia arriba, ojos abiertos, boca abierta mostrando los dientes. |
+| ASALTO-A | Cabeza hacia atrás, cejas hacia arriba, boca abierta y mostrando los dientes. |
+| CEDER-EL-PASO | Cejas hacia arriba, cabeza ladeada hacia la derecha. |
+| CONFIRMACIÓN | Cejas hacia arriba, se esboza una sonrisa. |
+| CUÁNTOS-A | Cabeza hacia atrás, ceño fruncido, cejas arriba. |
+| CUÁNTOS-B | Cabeza hacia atrás, ceño fruncido, cejas arriba. |
+| DESCUBRIR-A | Cejas hacia arriba, boca abierta. |
+| DIFUNDIR | Cabeza atrás, cejas arriba. |
+| NO-GUSTAR | Cejas hacia arriba, ceño fruncido. |
+| PATRULLA | Cejas hacia arriba, ojos inusualmente abiertos, mejillas infladas. |
+| PRENDER | Cejas hacia arriba. |
+| QUÉ-PADRE | Cabeza inclinada, cejas hacia arriba, boca semiabierta. |
+| Y-ESO | Cejas hacia arriba, comisuras de los labios ligeramente hacia abajo. |
 
 *14 filas.*
 
@@ -633,16 +655,16 @@ ORDER BY 2 DESC, 1;
 
 ```sql
 WITH f AS (
-    SELECT sdc.id_sena,
-           sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-           sdc.datos_fonologicos ->> 'significado' AS significado,
+    SELECT sdc.id_sena, g.glosa,
            COALESCE(sdc.datos_fonologicos ->> 'configuracion', '') AS c,
            COALESCE(sdc.datos_fonologicos ->> 'ubicacion', '')     AS u,
            COALESCE(sdc.datos_fonologicos ->> 'movimiento', '')    AS m,
            COALESCE(sdc.datos_fonologicos ->> 'orientacion', '')   AS o
     FROM sena_diccionario sdc
+    JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+    JOIN glosa g       ON g.id_glosa = sg.id_glosa
 )
-SELECT a.significado AS sena_a, b.significado AS sena_b,
+SELECT a.glosa AS sena_a, b.glosa AS sena_b,
        CASE WHEN a.c <> b.c THEN 'configuracion: ' || a.c || ' / ' || b.c
             WHEN a.u <> b.u THEN 'ubicacion: '     || a.u || ' / ' || b.u
             WHEN a.m <> b.m THEN 'movimiento: '    || a.m || ' / ' || b.m
@@ -657,26 +679,26 @@ ORDER BY sena_a, sena_b;
 
 | sena_a | sena_b | diferencia |
 |---|---|---|
-| A salvo | Asociación | movimiento: Recto hacia el frente. / Las manos se mueven formando un círculo hacia enfrente. |
-| A salvo | Contigo (B) | orientacion: Palmas hacia afuera. / Las palmas se encuentran frente a frente. |
-| A salvo | Lujo1 / Lujoso, sa2 | configuracion: A.1 / L.1 |
-| Abrazar | Alegría 1 / Disfrutar 2 / Celebrar 3 / Divertido, da 4 | movimiento: Las manos golpean los hombros repetidamente. / De atrás hacia adelante flexionando sólo las muñecas alternadamente. |
-| Abrazar | Confesar 1 / Confesión 2 (B) | movimiento: Las manos golpean los hombros repetidamente. / Las manos se mueven formando círculos hacia enfrente repetidamente. |
-| Abrazar | Confiar 1 / Confianza 2 | movimiento: Las manos golpean los hombros repetidamente. / Las manos se mueven formando un arco hacia el frente. |
-| Acta | Centro | movimiento: La MD se mueve formando un círculo y después golpea a la MB en línea recta. / La MD se mueve formando un círculo y golpea a la MB. |
-| Acta | Huella | movimiento: La MD se mueve formando un círculo y después golpea a la MB en línea recta. / El dedo pulgar de la MD presiona la palma de la MB. |
-| Acta | Suspender | movimiento: La MD se mueve formando un círculo y después golpea a la MB en línea recta. / MD recto hacia el frente. |
-| Acta | África (LSM) | movimiento: La MD se mueve formando un círculo y después golpea a la MB en línea recta. / La MD simula un salto de los dedos a la muñeca de MB. |
-| Adiós (A) | Sal (A) | configuracion: 5.1 / S.1 |
-| Alcohólicos Anónimos | Arroba | movimiento: La mano simula un salto de izquierda a derecha. / La mano se mueve formando un círculo. |
-| Alegría 1 / Disfrutar 2 / Celebrar 3 / Divertido, da 4 | Confesar 1 / Confesión 2 (B) | movimiento: De atrás hacia adelante flexionando sólo las muñecas alternadamente. / Las manos se mueven formando círculos hacia enfrente repetidamente. |
-| Alegría 1 / Disfrutar 2 / Celebrar 3 / Divertido, da 4 | Confiar 1 / Confianza 2 | movimiento: De atrás hacia adelante flexionando sólo las muñecas alternadamente. / Las manos se mueven formando un arco hacia el frente. |
-| Alma | Descubrir 1 / Ya me di cuenta – Percatarse 2 (B) | ubicacion: A la altura de la boca. / A la altura de la frente. |
-| Alma | Feo, a | ubicacion: A la altura de la boca. / A la altura de la cara. |
-| Alma | Lengua | movimiento: Recto hacia el frente. / La mano se mueve formando círculos. |
-| Alto | Empujar | orientacion: Palma hacia afuera. / Palmas hacia afuera. |
-| Alumno, na | Apóstoles (A) | ubicacion: A la altura de la boca. / A la altura de la frente. |
-| Analfabeto, ta | Ayer | ubicacion: Inicia sobre la barbilla y termina sobre la frente. / Inicia sobre la barbilla y termina sobre la mejilla. |
+| A-SALVO | ASOCIACIÓN | movimiento: Recto hacia el frente. / Las manos se mueven formando un círculo hacia enfrente. |
+| A-SALVO | CONTIGO-B | orientacion: Palmas hacia afuera. / Las palmas se encuentran frente a frente. |
+| A-SALVO | LUJO | configuracion: A.1 / L.1 |
+| ABRAZAR | ALEGRÍA | movimiento: Las manos golpean los hombros repetidamente. / De atrás hacia adelante flexionando sólo las muñecas alternadamente. |
+| ABRAZAR | CONFESAR-B | movimiento: Las manos golpean los hombros repetidamente. / Las manos se mueven formando círculos hacia enfrente repetidamente. |
+| ABRAZAR | CONFIAR | movimiento: Las manos golpean los hombros repetidamente. / Las manos se mueven formando un arco hacia el frente. |
+| ACTA | CENTRO | movimiento: La MD se mueve formando un círculo y después golpea a la MB en línea recta. / La MD se mueve formando un círculo y golpea a la MB. |
+| ACTA | HUELLA | movimiento: La MD se mueve formando un círculo y después golpea a la MB en línea recta. / El dedo pulgar de la MD presiona la palma de la MB. |
+| ACTA | SUSPENDER | movimiento: La MD se mueve formando un círculo y después golpea a la MB en línea recta. / MD recto hacia el frente. |
+| ACTA | ÁFRICA-LSM | movimiento: La MD se mueve formando un círculo y después golpea a la MB en línea recta. / La MD simula un salto de los dedos a la muñeca de MB. |
+| ADIÓS-A | SAL-A | configuracion: 5.1 / S.1 |
+| ALCOHÓLICOS-ANÓNIMOS | ARROBA | movimiento: La mano simula un salto de izquierda a derecha. / La mano se mueve formando un círculo. |
+| ALEGRÍA | CONFESAR-B | movimiento: De atrás hacia adelante flexionando sólo las muñecas alternadamente. / Las manos se mueven formando círculos hacia enfrente repetidamente. |
+| ALEGRÍA | CONFIAR | movimiento: De atrás hacia adelante flexionando sólo las muñecas alternadamente. / Las manos se mueven formando un arco hacia el frente. |
+| ALMA | DESCUBRIR-B | ubicacion: A la altura de la boca. / A la altura de la frente. |
+| ALMA | FEO | ubicacion: A la altura de la boca. / A la altura de la cara. |
+| ALMA | LENGUA | movimiento: Recto hacia el frente. / La mano se mueve formando círculos. |
+| ALTO-1 | EMPUJAR | orientacion: Palma hacia afuera. / Palmas hacia afuera. |
+| ALUMNO | APÓSTOLES-A | ubicacion: A la altura de la boca. / A la altura de la frente. |
+| ANALFABETO | AYER | ubicacion: Inicia sobre la barbilla y termina sobre la frente. / Inicia sobre la barbilla y termina sobre la mejilla. |
 
 *Se muestran 20 de 107 filas.*
 
@@ -746,40 +768,40 @@ ORDER BY 2 DESC;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado,
-       sdc.datos_fonologicos ->> 'tipo_sena'   AS partes
+SELECT g.glosa, sdc.datos_fonologicos ->> 'tipo_sena' AS partes
 FROM sena s
 JOIN tipo_sena t          ON t.id_tipo_sena = s.id_tipo
 JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
+JOIN sena_glosa sg        ON sg.id_sena = s.id_sena
+JOIN glosa g              ON g.id_glosa = sg.id_glosa
 WHERE t.tipo = 'SC'
-ORDER BY codigo;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| codigo | significado | partes |
-|---|---|---|
-| 5-G 10 | Adulterio | SC: I. SS; II. SM |
-| 5-G 100 | Portero, ra | SC: I. SB; II. SS |
-| 5-G 21 | Amante | SC: I. SM; II. SB |
-| 5-G 30 | Arena de mar | SC: I. SB; II. SS |
-| 5-G 42 | Balón 1 / Pelota 2 | SC: I. SS; II. SM |
-| 5-G 43 | Baloncesto – Basquetbol 1 / Encestar 2 | SC: I. y II. SM |
-| 5-G 48 | Bloqueador solar | SC: I. SM; II. y III. SB |
-| 5-G 50 | Boliche | SC: I. SS; II. SM |
-| 5-G 55 | Buceo | SC: I. SM; II. SB |
-| 5-G 75 | Cómplice | SC: I. y II. SB |
-| 5-G 84 | Cosechar 1 / Recolectar 2 | SC: I. y II. SB |
-| 5-G 85 | De contado | SC: I. y II. SB |
-| 5-G 87 | Detenido, -a – Arrestado, -a 1 / Arrestar 2 | SC: I. SM; II. SB; III. SB |
-| 5-G 96 | Palacio de los Deportes | SC: I. y II. SB |
-| 5-G 97 | Pantera | SC: I. SM; II. SB |
-| A-10 | Abuela 1 2 | SC: I. SB; II. SM |
-| A-100 | Ciudad de México | SC: I. SB; II. SM |
-| A-104 | Concuño 1 2 | SC: I. y II. SS |
-| A-105 | Conmigo (A) | SC: I. y II. SS |
-| A-106 | Conmigo (B) | SC: I. SS; II. SM |
+| glosa | partes |
+|---|---|
+| ABRIGO | I. SS; II. SM |
+| ABUELA | SC: I. SB; II. SM |
+| ACOMPAÑAR-A | SC: I. SB; II. SS |
+| ACTA-DE-DEMANDA | SC: I. y II. SB |
+| ACTA-DE-NACIMIENTO | SC: I. SB; II. SS |
+| ACTOR | I. SB y II. SB |
+| ADULTERIO | SC: I. SS; II. SM |
+| AGENDA-B | SC: I. SS; II. SB; III. SS |
+| AIRE-ACONDICIONADO | SC: I.; II y III. SM |
+| ALABANZA | SC: I. y II. SS |
+| ALELUYA | SC: I. y II. SS |
+| ALTAR | I. y II. SS |
+| AMANTE | SC: I. SM; II. SB |
+| AMÉN-A | I. y II. SM |
+| APROBAR | SC: I. y II. SB |
+| ARCHIVO | SC: I. SS; II. SB |
+| ARENA-DE-MAR | SC: I. SB; II. SS |
+| ASUNTO | SC: I. SM; II. SS |
+| AUMENTAR-ELEVAR-ECONOMÍA | SC: I. SM; II. SB |
+| AUMENTAR-GANANCIA | SC: I. SM; II. SS |
 
 *Se muestran 20 de 140 filas.*
 
@@ -814,13 +836,13 @@ ORDER BY 2 DESC;
 | SC: I., II. y III. SB | 2 |
 | I. y II. SS | 2 |
 | SC: I. SS; II. SB; III. SS. | 1 |
-| I. SB y II. SB | 1 |
-| SC: I. SM y II. SM | 1 |
-| I. y II. SM | 1 |
-| SC: I. SM; II. SB; III. SB | 1 |
-| SC: I.SB; II. SS | 1 |
-| I. y II.SM | 1 |
+| SC: I. SS; II. y III. SB | 1 |
+| SC: I. y II. SS; III. SM | 1 |
 | SC: I. y II.SB | 1 |
+| SC: I.; II y III. SM | 1 |
+| SC: I.SB; II. SS | 1 |
+| SC: I: SS; II. SS | 1 |
+| I. SB y II. SB | 1 |
 
 *Se muestran 20 de 32 filas.*
 
@@ -831,13 +853,14 @@ ORDER BY 2 DESC;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, v.path, v.tipo_de_toma, v.mano_dominante,
-       st.id_senante, st.perfil_nativo
-FROM sena_diccionario sdc
-JOIN sena_video sv ON sv.id_sena_diccionario = sdc.id_sena_diccionario
-JOIN video v       ON v.id_video = sv.id_video
-JOIN senante st    ON st.id_senante = v.id_senante
-WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 3';
+SELECT g.glosa, v.path, v.tipo_de_toma, v.mano_dominante, st.id_senante, st.perfil_nativo
+FROM glosa g
+JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
+JOIN sena_diccionario sdc ON sdc.id_sena = sg.id_sena
+JOIN sena_video sv        ON sv.id_sena_diccionario = sdc.id_sena_diccionario
+JOIN video v              ON v.id_video = sv.id_video
+JOIN senante st           ON st.id_senante = v.id_senante
+WHERE g.glosa = 'CASA-A';
 ```
 
 </details>
@@ -887,11 +910,13 @@ ORDER BY st.id_senante;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, COUNT(DISTINCT v.id_senante) AS num_senantes
+SELECT g.glosa, COUNT(DISTINCT v.id_senante) AS num_senantes
 FROM sena_diccionario sdc
 JOIN sena_video sv ON sv.id_sena_diccionario = sdc.id_sena_diccionario
 JOIN video v       ON v.id_video = sv.id_video
-GROUP BY 1
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
+GROUP BY g.glosa
 HAVING COUNT(DISTINCT v.id_senante) > 1;
 ```
 
@@ -968,17 +993,20 @@ FROM sena s;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT s.id_sena, sdc.datos_fonologicos ->> 'codigo' AS codigo, sdc.datos_fonologicos ->> 'tipo_sena' AS tipo_original
+SELECT g.glosa, sdc.datos_fonologicos ->> 'codigo' AS codigo,
+       sdc.datos_fonologicos ->> 'tipo_sena' AS tipo_original
 FROM sena s
 JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
+JOIN sena_glosa sg        ON sg.id_sena = s.id_sena
+JOIN glosa g              ON g.id_glosa = sg.id_glosa
 WHERE s.id_tipo IS NULL;
 ```
 
 </details>
 
-| id_sena | codigo | tipo_original |
+| glosa | codigo | tipo_original |
 |---|---|---|
-| 1003 | O-80 | MB |
+| TODAVÍA | O-80 | MB |
 
 *1 fila.*
 
@@ -987,39 +1015,40 @@ WHERE s.id_tipo IS NULL;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado,
+SELECT g.glosa,
        NOT sdc.datos_fonologicos ? 'movimiento'  AS sin_movimiento,
        NOT sdc.datos_fonologicos ? 'orientacion' AS sin_orientacion
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE NOT sdc.datos_fonologicos ?& ARRAY['movimiento', 'orientacion']
-ORDER BY codigo;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| codigo | significado | sin_movimiento | sin_orientacion |
-|---|---|---|---|
-| 5-G 22 | Amar 1 / Amor 2 | t | f |
-| 5-G 39 | Audífonos | t | f |
-| 5-G 63 | Capitán | t | f |
-| 5-G 65 | Cargar | t | f |
-| A-136 | Mamila 1 / Chupón 2 | t | f |
-| A-51 | Ardilla | t | f |
-| A-90 | Centroamérica (SSI) | t | f |
-| B-P 123 | Confesar 1 / Confesión 2 (A) | t | f |
-| B-P 229 | Pingüino | t | f |
-| B-P 232 | Prometer 1 / Promesa 2 | t | f |
-| C-78 | CPU (Gabinete) | t | f |
-| C-88 | Escuchar | t | f |
-| L-119 | LSM | t | t |
-| L-160 | Vagina | t | f |
-| L-54 | Gel | t | f |
-| L-85 | Inglés | t | f |
-| L-86 | Inglaterra | t | f |
-| O-61 | Oro (A) | t | f |
-| S-127 | Tepito (STC Metro) | t | f |
-| S-50 | Estornudar | t | f |
+| glosa | sin_movimiento | sin_orientacion |
+|---|---|---|
+| AMAR | t | f |
+| ARDILLA | t | f |
+| AUDÍFONOS | t | f |
+| CAPITÁN | t | f |
+| CARGAR | t | f |
+| CENTROAMÉRICA | t | f |
+| CONFESAR-A | t | f |
+| CPU | t | f |
+| ESCUCHAR | t | f |
+| ESTORNUDAR | t | f |
+| GEL | t | f |
+| INGLATERRA | t | f |
+| INGLÉS | t | f |
+| LSM | t | t |
+| MAMILA | t | f |
+| ORO-A | t | f |
+| PINGÜINO | t | f |
+| PROMETER | t | f |
+| SAL-B | t | f |
+| TEPITO | t | f |
 
 *Se muestran 20 de 21 filas.*
 
@@ -1045,44 +1074,57 @@ WHERE NOT EXISTS (SELECT 1 FROM sena_palabra sp WHERE sp.id_palabra = p.id_palab
 
 ```sql
 SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, COUNT(*) AS veces,
-       STRING_AGG(sdc.datos_fonologicos ->> 'significado', ' | ') AS significados
+       STRING_AGG(g.glosa, ', ' ORDER BY g.glosa) AS glosas
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 GROUP BY 1
 HAVING COUNT(*) > 1;
 ```
 
 </details>
 
-| codigo | veces | significados |
+| codigo | veces | glosas |
 |---|---|---|
-| C-84 | 2 | Cuba 1 (LSM) / Cuba 2 (bebida) \| Enfermera (A) |
+| C-84 | 2 | CUBA-LSM, ENFERMERA-A |
 
 *1 fila.*
 
-### <a id="i2"></a>I2. [CONTROL: vacía = sin problemas] Significados repetidos (posibles variantes o duplicados)
+### <a id="i2"></a>I2. [CONTROL: vacía = sin problemas] Glosas numeradas: el diccionario no da nada que distinga esas señas
 
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'significado' AS significado, COUNT(*) AS veces,
-       STRING_AGG(sdc.datos_fonologicos ->> 'codigo', ', ') AS codigos
-FROM sena_diccionario sdc
-GROUP BY 1
-HAVING COUNT(*) > 1
-ORDER BY significado;
+SELECT g.glosa, sdc.datos_fonologicos ->> 'codigo' AS codigo,
+       sdc.datos_fonologicos ->> 'significado' AS significado
+FROM glosa g
+JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
+JOIN sena_diccionario sdc ON sdc.id_sena = sg.id_sena
+WHERE g.glosa ~ '-[0-9]+$'
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| significado | veces | codigos |
+| glosa | codigo | significado |
 |---|---|---|
-| Abandonar | 2 | A-7, C-1 |
-| Adorar | 2 | B-P 15, A-21 |
-| Constitución | 2 | S-35, C-72 |
-| Separar – Terminar (relación de novios) | 2 | A-168, A-169 |
-| Vagina | 2 | A-180, L-160 |
+| ABANDONAR-1 | A-7 | Abandonar |
+| ABANDONAR-2 | S-4 | Abandonar 1 – Dejar 2 |
+| ABANDONAR-3 | C-1 | Abandonar |
+| ADORAR-1 | B-P 15 | Adorar |
+| ADORAR-2 | A-21 | Adorar |
+| ALTO-1 | B-P 28 | Alto |
+| ALTO-2 | A-33 | Alto, ta |
+| CONSTITUCIÓN-1 | S-35 | Constitución |
+| CONSTITUCIÓN-2 | C-72 | Constitución |
+| NACIONAL-1 | B-P 212 | Nacional |
+| NACIONAL-2 | L-129 | Nacional 1 / República Mexicana 2 |
+| SEPARAR-1 | A-168 | Separar – Terminar (relación de novios) |
+| SEPARAR-2 | A-169 | Separar – Terminar (relación de novios) |
+| VAGINA-1 | A-180 | Vagina |
+| VAGINA-2 | L-160 | Vagina |
 
-*5 filas.*
+*15 filas.*
 
 ### <a id="i3"></a>I3. [CONTROL: vacía = sin problemas] Lengua de la entrada distinta de la lengua de la seña
 
@@ -1099,14 +1141,20 @@ WHERE s.id_lengua <> sdc.id_lengua;
 
 **Sin resultados (0 filas).**
 
-### <a id="i4"></a>I4. [CONTROL: vacía = sin problemas] Palabras duplicadas (misma palabra y lengua dos veces)
+### <a id="i4"></a>I4. [CONTROL: vacía = sin problemas] Glosas repetidas o señas con más de una glosa
 
 <details><summary>SQL</summary>
 
 ```sql
-SELECT LOWER(palabra) AS palabra, id_lengua, COUNT(*)
-FROM palabra
-GROUP BY LOWER(palabra), id_lengua
+SELECT g.glosa, COUNT(*) AS veces
+FROM glosa g
+JOIN sena_glosa sg ON sg.id_glosa = g.id_glosa
+GROUP BY g.glosa
+HAVING COUNT(*) > 1
+UNION ALL
+SELECT 'seña ' || sg.id_sena, COUNT(*)
+FROM sena_glosa sg
+GROUP BY sg.id_sena
 HAVING COUNT(*) > 1;
 ```
 
@@ -1119,10 +1167,12 @@ HAVING COUNT(*) > 1;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo, t.tipo, sdc.datos_fonologicos ->> 'tipo_sena' AS tipo_json
+SELECT g.glosa, t.tipo, sdc.datos_fonologicos ->> 'tipo_sena' AS tipo_json
 FROM sena s
 JOIN tipo_sena t          ON t.id_tipo_sena = s.id_tipo
 JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
+JOIN sena_glosa sg        ON sg.id_sena = s.id_sena
+JOIN glosa g              ON g.id_glosa = sg.id_glosa
 WHERE t.tipo <> 'SC' AND t.tipo <> sdc.datos_fonologicos ->> 'tipo_sena';
 ```
 
@@ -1137,7 +1187,8 @@ WHERE t.tipo <> 'SC' AND t.tipo <> sdc.datos_fonologicos ->> 'tipo_sena';
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
+SELECT g.glosa,
+       sdc.datos_fonologicos ->> 'codigo' AS codigo,
        l.nombre_completo AS lengua,
        t.tipo,
        (SELECT STRING_AGG(p.palabra, ', ') FROM sena_palabra x JOIN palabra p USING (id_palabra) WHERE x.id_sena = s.id_sena) AS palabras,
@@ -1146,19 +1197,21 @@ SELECT sdc.datos_fonologicos ->> 'codigo' AS codigo,
        sdc.datos_fonologicos ->> 'configuracion' AS configuracion,
        sdc.datos_fonologicos ->> 'ubicacion'     AS ubicacion,
        sdc.datos_fonologicos ->> 'movimiento'    AS movimiento
-FROM sena s
+FROM glosa g
+JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
+JOIN sena s               ON s.id_sena = sg.id_sena
 JOIN lengua l             ON l.id_lengua = s.id_lengua
 LEFT JOIN tipo_sena t     ON t.id_tipo_sena = s.id_tipo
 JOIN sena_diccionario sdc ON sdc.id_sena = s.id_sena
 JOIN diccionario dic      ON dic.id_diccionario = sdc.id_diccionario
-WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 4';
+WHERE g.glosa = 'ABAJO';
 ```
 
 </details>
 
-| codigo | lengua | tipo | palabras | definiciones | diccionario | configuracion | ubicacion | movimiento |
-|---|---|---|---|---|---|---|---|---|
-| B-P 4 | Lengua de Señas Mexicana | SB | Abajo, Debajo | 1. adv. En el lugar o parte inferior. 2. adv. En la parte inferior o interna de algo y cubierto por ello. | Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017) | MD y MB B-P.6 | MD inicia sobre MB y termina a la altura de la cintura, MB a la altura del pecho. | La MD se mueve formando un arco. |
+| glosa | codigo | lengua | tipo | palabras | definiciones | diccionario | configuracion | ubicacion | movimiento |
+|---|---|---|---|---|---|---|---|---|---|
+| ABAJO | B-P 4 | Lengua de Señas Mexicana | SB | Abajo, Debajo | 1. adv. En el lugar o parte inferior. 2. adv. En la parte inferior o interna de algo y cubierto por ello. | Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017) | MD y MB B-P.6 | MD inicia sobre MB y termina a la altura de la cintura, MB a la altura del pecho. | La MD se mueve formando un arco. |
 
 *1 fila.*
 
@@ -1169,37 +1222,38 @@ WHERE sdc.datos_fonologicos ->> 'codigo' = 'B-P 4';
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'significado'   AS significado,
-       sdc.datos_fonologicos ->> 'nota_cultural' AS nota_cultural
+SELECT g.glosa, sdc.datos_fonologicos ->> 'nota_cultural' AS nota_cultural
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ? 'nota_cultural'
-ORDER BY significado;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| significado | nota_cultural |
+| glosa | nota_cultural |
 |---|---|
-| Abandonar(C) | Esta seña connota una actitud despectiva |
-| Activo, -a | La seña se usa para la comunidad sorda LGBTTTI. |
-| Adorar | La seña se usa en la comunidad sorda de los Testigos de Jehová. |
-| Adorar | La seña se usa en la comunidad sorda cristiana y mormona. |
-| Adventista 1 – Iglesia Adventista del Séptimo Día 2 | La seña se usa en la comunidad sorda adventista. |
-| Adán (A) | La seña se usa en la comunidad sorda católica, cristiana y de los Testigos de Jehová. |
-| Adán (B) | La seña se usa en la comunidad sorda mormona. |
-| Alabanza 1 /Alabar 2 | La seña se usa en la comunidad sorda católica. |
-| Alabar 1 / Alabanza 2 | La seña se usa en la comunidad sorda Amistad Cristiana e Iglesia de Cristo. |
-| Aleluya | La seña se usa en la comunidad sorda Amistad Cristiana e Iglesia de Cristo. |
-| Altar | La seña se usa en la comunidad sorda mormona. |
-| Alumno, na | El género femenino se articula con ALUMNO + MUJER. |
-| Amén (A) | La seña se usa en la comunidad sorda católica. |
-| Amén (B) | la seña se usa en la comunidad sorda cristiana. |
-| Anciano | La seña se usa en la comunidad sorda del Testigo de Je hová. |
-| Antropología | La seña se usa en la comunidad sorda catolica. |
-| Apocalipsis (B) | la seña se usa en la comunidad sorda mormona. |
-| Aprovechar | Generalmente se acompaña de la emisión de un clic bilabial o lengua vibratoria dependiendo de su contexto.. |
-| Apóstol | la seña se usa en la comunidad sorda de los Testigos de Jehová. |
-| Apóstoles (A) | La seña se usa en la comunidad sorda católica. |
+| ABANDONAR-C | Esta seña connota una actitud despectiva |
+| ACTIVO | La seña se usa para la comunidad sorda LGBTTTI. |
+| ADORAR-1 | La seña se usa en la comunidad sorda de los Testigos de Jehová. |
+| ADORAR-2 | La seña se usa en la comunidad sorda cristiana y mormona. |
+| ADVENTISTA | La seña se usa en la comunidad sorda adventista. |
+| ADÁN-A | La seña se usa en la comunidad sorda católica, cristiana y de los Testigos de Jehová. |
+| ADÁN-B | La seña se usa en la comunidad sorda mormona. |
+| ALABANZA | La seña se usa en la comunidad sorda católica. |
+| ALABAR | La seña se usa en la comunidad sorda Amistad Cristiana e Iglesia de Cristo. |
+| ALELUYA | La seña se usa en la comunidad sorda Amistad Cristiana e Iglesia de Cristo. |
+| ALTAR | La seña se usa en la comunidad sorda mormona. |
+| ALUMNO | El género femenino se articula con ALUMNO + MUJER. |
+| AMÉN-A | La seña se usa en la comunidad sorda católica. |
+| AMÉN-B | la seña se usa en la comunidad sorda cristiana. |
+| ANCIANO | La seña se usa en la comunidad sorda del Testigo de Je hová. |
+| ANTROPOLOGÍA | La seña se usa en la comunidad sorda catolica. |
+| APOCALIPSIS-B | la seña se usa en la comunidad sorda mormona. |
+| APROVECHAR | Generalmente se acompaña de la emisión de un clic bilabial o lengua vibratoria dependiendo de su contexto.. |
+| APÓSTOL | la seña se usa en la comunidad sorda de los Testigos de Jehová. |
+| APÓSTOLES-A | La seña se usa en la comunidad sorda católica. |
 
 *Se muestran 20 de 42 filas.*
 
@@ -1208,37 +1262,38 @@ ORDER BY significado;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'significado'    AS significado,
-       sdc.datos_fonologicos ->> 'representacion' AS representacion
+SELECT g.glosa, sdc.datos_fonologicos ->> 'representacion' AS representacion
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ? 'representacion'
-ORDER BY significado;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| significado | representacion |
+| glosa | representacion |
 |---|---|
-| Abajo – Debajo | Simula la acción de poner algo debajo de otra cosa. |
-| Abofetear (A) | Simula la acción de abofetear a alguien. |
-| Abofetear (B) | Simula la acción de abofetear a alguien. |
-| Abrazar | Simula la acción de abrazar a alguien. |
-| Acceso 1 / Accesibilidad 2 | Simula la acción de entrar a un lugar. |
-| Accidente | Simula la acción de herirse. |
-| Acné – Barro– Espinilla | Simula la acción de exprimir un barro o una espinilla. |
-| Acta | Simula la acción de sellar un documento |
-| Acta de demanda 1 2 | Simula la acción de sellar un documento. |
-| Acta de nacimiento | Simula la acción de sellar un documento y cargar a un bebé. |
-| Almeja | Simula el abrir de una almeja. |
-| Almohada (B) | Simula la acción de apretar una almohada. |
-| Almohada (C) | Simula la acción de apretar una almohada detrás de la cabeza. |
-| Altar | Simula la forma de un altar. |
-| Alto, ta | Simula la altura de una persona. |
-| Amanecer | Simula el sol saliendo por el horizonte. |
-| Ametralladora – Metralleta | Simula la acción de disparar con una ametralladora o metralleta. |
-| Amén (A) | Simula la imagen de la cruz. |
-| América (SSI) | Simula la forma del continente americano. |
-| Andar – Caminar | Simula la acción de caminar. |
+| ABAJO | Simula la acción de poner algo debajo de otra cosa. |
+| ABOFETEAR-A | Simula la acción de abofetear a alguien. |
+| ABOFETEAR-B | Simula la acción de abofetear a alguien. |
+| ABRAZAR | Simula la acción de abrazar a alguien. |
+| ACCESO | Simula la acción de entrar a un lugar. |
+| ACCIDENTE | Simula la acción de herirse. |
+| ACNÉ | Simula la acción de exprimir un barro o una espinilla. |
+| ACTA | Simula la acción de sellar un documento |
+| ACTA-DE-DEMANDA | Simula la acción de sellar un documento. |
+| ACTA-DE-NACIMIENTO | Simula la acción de sellar un documento y cargar a un bebé. |
+| ALMEJA | Simula el abrir de una almeja. |
+| ALMOHADA-B | Simula la acción de apretar una almohada. |
+| ALMOHADA-C | Simula la acción de apretar una almohada detrás de la cabeza. |
+| ALTAR | Simula la forma de un altar. |
+| ALTO-2 | Simula la altura de una persona. |
+| AMANECER | Simula el sol saliendo por el horizonte. |
+| AMETRALLADORA | Simula la acción de disparar con una ametralladora o metralleta. |
+| AMÉN-A | Simula la imagen de la cruz. |
+| AMÉRICA | Simula la forma del continente americano. |
+| ANDAR | Simula la acción de caminar. |
 
 *Se muestran 20 de 160 filas.*
 
@@ -1247,27 +1302,28 @@ ORDER BY significado;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado
+SELECT g.glosa, sdc.datos_fonologicos ->> 'significado' AS significado
 FROM sena_diccionario sdc
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
 WHERE sdc.datos_fonologicos ->> 'significado' LIKE '%(STC Metro)%'
-ORDER BY codigo;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| codigo | significado |
+| glosa | significado |
 |---|---|
-| 5-G 41 | Azteca 1 / Cuauhtémoc 2 3 (STC Metro) |
-| 5-G 53 | Bosque 1 / Popotla 2 (STC Metro) |
-| B-P 63 | Bandera 1 (A) / Pantitlán 2 (STC Metro) / Patriotismo 3 (STC Metro) |
-| B-P 99 | Buenavista(STC Metro) |
-| C-46 | Chabacano (A) (STC Metro) |
-| C-47 | Chabacano 1 (B) (STC Metro) / Lázaro Cárdenas 2 3 (STC Metro) |
-| C-58 | Ciudad Deportiva (STC Metro) |
-| L-122 | Luna1 / Taxqueña2 (STC Metro) |
-| S-127 | Tepito (STC Metro) |
-| S-78 | Nativitas (STC Metro) |
+| AZTECA | Azteca 1 / Cuauhtémoc 2 3 (STC Metro) |
+| BANDERA-A | Bandera 1 (A) / Pantitlán 2 (STC Metro) / Patriotismo 3 (STC Metro) |
+| BOSQUE | Bosque 1 / Popotla 2 (STC Metro) |
+| BUENAVISTA | Buenavista(STC Metro) |
+| CHABACANO-A | Chabacano (A) (STC Metro) |
+| CHABACANO-B | Chabacano 1 (B) (STC Metro) / Lázaro Cárdenas 2 3 (STC Metro) |
+| CIUDAD-DEPORTIVA | Ciudad Deportiva (STC Metro) |
+| LUNA | Luna1 / Taxqueña2 (STC Metro) |
+| NATIVITAS | Nativitas (STC Metro) |
+| TEPITO | Tepito (STC Metro) |
 
 *10 filas.*
 
@@ -1276,39 +1332,40 @@ ORDER BY codigo;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'codigo'      AS codigo,
-       sdc.datos_fonologicos ->> 'significado' AS significado
+SELECT g.glosa, sdc.datos_fonologicos ->> 'significado' AS significado
 FROM sena_diccionario sdc
-WHERE sdc.datos_fonologicos ->> 'significado' LIKE '%(SSI)%'
-ORDER BY codigo;
+JOIN sena_glosa sg ON sg.id_sena = sdc.id_sena
+JOIN glosa g       ON g.id_glosa = sg.id_glosa
+WHERE sdc.datos_fonologicos ->> 'significado' ~ '\(SS[Il]\)'
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| codigo | significado |
+| glosa | significado |
 |---|---|
-| 5-G 105 | Reunión (Isla de Francia) (SSI) |
-| 5-G 12 | África (SSI) |
-| 5-G 14 | Albania (SSI) |
-| 5-G 31 | Argentina (SSI) |
-| 5-G 44 | Bangladesh (SSI) |
-| 5-G 61 | Camboya (SSI) |
-| A-121 | Estonia (SSI) |
-| A-123 | Etiopía (SSI) |
-| A-127 | India (SSI) |
-| A-129 | Irán (SSI) |
-| A-130 | Islandia (SSI) |
-| A-173 | Sudán (SSI) |
-| A-61 | Asia (SSI) (B) |
-| A-88 | Canadá (B) (SSI) |
-| A-90 | Centroamérica (SSI) |
-| B-P 134 | Corea del Norte (SSI) |
-| B-P 135 | Corea del Sur (SSI) |
-| B-P 142 | Cuba (SSI) |
-| B-P 156 | Egipcio 1 / Egipto 2 (SSI) |
-| B-P 182 | Jamaica (SSI) |
+| ALBANIA | Albania (SSI) |
+| AMÉRICA | América (SSI) |
+| ARGENTINA-SSI | Argentina (SSI) |
+| ASIA-B | Asia (SSI) (B) |
+| BANGLADESH | Bangladesh (SSI) |
+| BELICE | Belice (SSI) |
+| BENIN | Benin (SSI) |
+| BERLÍN-ALEMANIA | Berlín, Alemania (SSI) |
+| BOGOTÁ-COLOMBIA | Bogotá, Colombia (SSI) |
+| BOSNIA-Y-HERZEGOVINA | Bosnia y Herzegovina (SSI) |
+| BOTSUANA | Botsuana (SSI) |
+| BRASIL-SSI | Brasil (SSI) |
+| BULGARIA | Bulgaria (SSI) |
+| BÉLGICA-SSI | Bélgica (SSI) |
+| CAMBOYA | Camboya (SSI) |
+| CANADÁ-B | Canadá (B) (SSI) |
+| CENTROAMÉRICA | Centroamérica (SSI) |
+| COLOMBIA-SSI | Colombia (SSl) |
+| COREA-DEL-NORTE | Corea del Norte (SSI) |
+| COREA-DEL-SUR | Corea del Sur (SSI) |
 
-*Se muestran 20 de 48 filas.*
+*Se muestran 20 de 49 filas.*
 
 ### <a id="k5"></a>K5. Señas por categoría gramatical (inicio de la definición: sust., v., adj., adv., ...)
 
@@ -1345,23 +1402,24 @@ ORDER BY 2 DESC;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.datos_fonologicos ->> 'significado' AS significado, d.definicion
+SELECT g.glosa, d.definicion
 FROM definicion d
-JOIN sena_definicion x    ON x.id_definicion = d.id_definicion
-JOIN sena_diccionario sdc ON sdc.id_sena = x.id_sena
+JOIN sena_definicion x ON x.id_definicion = d.id_definicion
+JOIN sena_glosa sg     ON sg.id_sena = x.id_sena
+JOIN glosa g           ON g.id_glosa = sg.id_glosa
 WHERE d.definicion ILIKE '%comida%'
-ORDER BY significado;
+ORDER BY g.glosa;
 ```
 
 </details>
 
-| significado | definicion |
+| glosa | definicion |
 |---|---|
-| Carl´s Jr. ® | sust. Cadena de restaurantes de hamburguesas y comida rápida cuya sede central se localiza en Estados Unidos. |
-| Cenar 1 / Cena 2 | 1. v. intr. Comer por la noche. 2. sust. f. Última comida del día que se toma al atardecer o por la noche. |
-| Chimenea | sust. f. Construcción doméstica terminada en un conducto vertical que lleva al exterior el humo producido por la leña que se puso en su base para cuecer la comida o calentar la ca… |
-| Cocinar 1 / Cocina 2 | 1. v. tr. Preparar los alimentos cociéndolos en el fuego. 2. sust. f. Pieza o sitio de la casa en el cual se guisa la comida. |
-| Desayunar 1 / Desayuno 2 | 1. v. tr. Tomar la primera comida del día que generalmente es ligera y se hace por la mañana. 2. sust. Primera comida del día generalmente ligera que se toma por la mañana. |
-| Mancha | sust. f. Porción de alguna cosa, como una gota de líquido, un fragmento de comida, etc. que ensucia o echa a perder una cosa por ser de apariencia o color distinto del que domina … |
+| CARLS-JR | sust. Cadena de restaurantes de hamburguesas y comida rápida cuya sede central se localiza en Estados Unidos. |
+| CENAR | 1. v. intr. Comer por la noche. 2. sust. f. Última comida del día que se toma al atardecer o por la noche. |
+| CHIMENEA | sust. f. Construcción doméstica terminada en un conducto vertical que lleva al exterior el humo producido por la leña que se puso en su base para cuecer la comida o calentar la ca… |
+| COCINAR | 1. v. tr. Preparar los alimentos cociéndolos en el fuego. 2. sust. f. Pieza o sitio de la casa en el cual se guisa la comida. |
+| DESAYUNAR | 1. v. tr. Tomar la primera comida del día que generalmente es ligera y se hace por la mañana. 2. sust. Primera comida del día generalmente ligera que se toma por la mañana. |
+| MANCHA | sust. f. Porción de alguna cosa, como una gota de líquido, un fragmento de comida, etc. que ensucia o echa a perder una cosa por ser de apariencia o color distinto del que domina … |
 
 *6 filas.*

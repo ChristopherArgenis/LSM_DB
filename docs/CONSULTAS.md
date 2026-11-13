@@ -52,7 +52,7 @@ En cuanto se carguen definiciones en inglés ligadas a las mismas señas, A4 fun
 | Variantes por región / estado / comunidad | Campo `region` en `sena`, `senante` o `video` |
 | Sinónimos, variantes o componentes **entre señas** | Tabla `sena_relacion (id_sena_a, id_sena_b, tipo)`. Existe el tipo SC (compuesta), pero no se puede decir de qué señas se compone |
 | Equivalencia directa LSM ↔ ASL | Hoy solo se deduciría si ambas señas comparten una palabra (B1) |
-| Lengua, año o equipo completo de un diccionario | `diccionario` solo tiene `completo` y `autor` |
+| Lengua, año o equipo completo de un diccionario | `diccionario` solo tiene `nombre_completo` y `autor` |
 | Qué diccionario dio una definición | `definicion` no se liga a `diccionario` (se usa el campo `autor`) |
 | Ejemplos de uso u oraciones | No hay tablas ni campos para ello |
 | Categoría gramatical | Solo se puede deducir del inicio de la definición (`sust.`, `v.`, … en K5) |
@@ -69,7 +69,7 @@ En cuanto se carguen definiciones en inglés ligadas a las mismas señas, A4 fun
 
 ### 1.5 Lo que el Diccionario CDMX no trae
 
-- **Glosas:** la seña se identifica por `codigo` y `significado` del JSON.
+- **Glosas:** el diccionario no las trae; se generaron a partir del significado (`sql/02b_glosas_dlsm_cdmx.sql`). Son etiquetas de trabajo, no glosas validadas por especialistas.
 - **Otros idiomas:** solo hay español, así que A3 y A4 salen vacías.
 - **Videos y señantes:** el bloque F sale vacío.
 - **Un segundo diccionario:** la comparación entre diccionarios (C4) sale vacía.
@@ -80,7 +80,7 @@ En cuanto se carguen definiciones en inglés ligadas a las mismas señas, A4 fun
 Cosas que se pueden capturar mal sin que PostgreSQL lo impida (el bloque **I** las detecta):
 
 - Códigos repetidos en el JSON (`C-84` aparece dos veces) → **I1**
-- `sena_diccionario.id_lengua` distinta de `sena.id_lengua` → **I3**
+- Entradas de diccionario sin seña o sin diccionario → **I3**
 - La misma palabra capturada dos veces → **I4**
 - `modalidad`, `perfil_nativo`, `mano_dominante`, `tipo_de_toma` son texto libre ("derecha", "Derecha", "der")
 - ~~`datos_fonologicos` sin estructura fija~~ → resuelto: PostgreSQL valida el JSON ([DATOS_FONOLOGICOS.md](DATOS_FONOLOGICOS.md))

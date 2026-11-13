@@ -33,6 +33,7 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 | `docs/DECISIONES_DE_DISENO.md` | Por qué partimos del esquema y no del diccionario, lengua única, ABANDONAR |
 | `docs/TRABAJO_FUTURO.md` | Verbos, señas compuestas y metadata discretizada |
 | `docs/EJERCICIOS_ANOTACION_MANUAL.md` | Ejercicios para resolver consultas a mano, con soluciones |
+| `docs/BITACORA.md` | Registro de discusiones y decisiones abiertas (mesa redonda pendiente) |
 | `docs/img/diagrama_er.png` | Diagrama entidad-relación actualizado |
 
 ## Instalación

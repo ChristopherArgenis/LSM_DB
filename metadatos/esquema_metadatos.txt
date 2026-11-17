@@ -1,0 +1,144 @@
+ESQUEMA DE METADATOS · LSM_DB
+=============================
+
+METADATOS es un JSON aparte: NO vive en la base de datos.
+Se genera a partir de datos_fonologicos con metadatos/generar_metadatos.sql.
+datos_fonologicos es la fuente (el texto del diccionario, tal cual);
+METADATOS es un índice con valores de lista cerrada, para buscar y comparar.
+
+Reglas generales
+- Las claves que no aplican se OMITEN: no se escribe [] ni null.
+  Ejemplo: una seña de una sola mano no lleva cm_base ni ubicacion_base.
+- Configuración: solo la FAMILIA de la mano («B-P», no «B-P.12»).
+- Las 8 claves de mano son las mismas en «presencia» y en cada momento.
+
+
+Una seña en el archivo metadatos.json
+-------------------------------------
+
+{
+  "codigo": "str",                      # Obligatorio. Código de la seña en el diccionario (B-P 52, O-5)
+  "glosa":  "str",                      # Obligatorio. Glosa de la seña en la base (AVANZADO-B, ABANDONAR-B)
+  "METADATOS": {                        # Obligatorio.
+
+    "presencia": {                      # Obligatorio. Resumen: todo lo que aparece en la seña, sin repetir,
+                                        #   en el orden en que aparece
+      "cm_dominante":          ["str"], # Obligatorio. Familias de la mano dominante (lista CM)
+      "cm_base":               ["str"], # Opcional. Solo si interviene la mano base (lista CM)
+      "ubicacion_dominante":   ["str"], # Obligatorio. Zonas de la mano dominante (lista ZONAS)
+      "ubicacion_base":        ["str"], # Opcional. Zonas de la mano base (lista ZONAS)
+      "orientacion_dominante": ["str"], # Opcional. Lista ORIENTACION (no se genera en la versión 1)
+      "orientacion_base":      ["str"], # Opcional. Lista ORIENTACION (no se genera en la versión 1)
+      "movimiento_dominante":  ["str"], # Opcional. Lista MOVIMIENTO (no se genera en la versión 1)
+      "movimiento_base":       ["str"]  # Opcional. Lista MOVIMIENTO (no se genera en la versión 1)
+    },
+
+    "linea_temporal": [                 # Obligatorio. Un objeto por momento, en orden.
+                                        #   «pasa de X a Y» = 2 momentos; «I. …; II. …» = un momento
+                                        #   (o más) por parte. B-P.2 → B-P.12 son 2 momentos B-P, B-P
+                                        #   (la familia es la misma, pero la mano sí cambia)
+      {
+        "orden":                 "int",   # Obligatorio. 1, 2, 3...
+        "cm_dominante":          "str",   # Obligatorio*. UNA familia por momento (lista CM)
+        "cm_base":               "str",   # Opcional. UNA familia por momento (lista CM)
+        "ubicacion_dominante":   ["str"], # Opcional. Solo en señas compuestas (I., II.); en las demás
+        "ubicacion_base":        ["str"], #   sería igual a la de «presencia» y se omite
+        "orientacion_dominante": ["str"], # Opcional. (no se genera en la versión 1)
+        "orientacion_base":      ["str"], # Opcional. (no se genera en la versión 1)
+        "movimiento_dominante":  ["str"], # Opcional. (no se genera en la versión 1)
+        "movimiento_base":       ["str"]  # Opcional. (no se genera en la versión 1)
+      }
+    ]
+  }
+}
+
+* cm_dominante falta en un momento solo cuando en ese momento actúa
+  únicamente la mano base (HOZ, S-59: «I. MB S.1; II MD 1.1 …») o cuando
+  el diccionario tiene una errata en el código (CON-COLMILLO «Y1»,
+  LÁPIZ-ADHESIVO «B.P.2», PUBLICIDAD-B «1.l.1»).
+
+
+Listas cerradas
+---------------
+
+CM (familias de configuración manual, 25, tal como aparecen en el DLSM CDMX 2017):
+  1, 1-I, 2, 3, 4, 5, 8, A, B-P, C, D, E, F, H, I, L, M, N, O, P, Q, R, S, U, Y
+  (H aparece solo como «Configuración H», en CHETUMAL-QUINTANA-ROO y CHINA)
+
+ZONAS (22, de la cabeza hacia abajo):
+  Cabeza, Frente, Sien, Ceja, Ojo, Nariz, Mejilla, Oreja, Boca, Barbilla, Cara,
+  Cuello, Hombro, Pecho, Plexo, Abdomen, Cintura, Cadera, Brazo, Muñeca, Mano,
+  Espalda
+  Equivalencias usadas al generar:
+    nuca → Cabeza · pómulo → Mejilla · labio, comisura, diente → Boca
+    mentón → Barbilla · rostro → Cara · axila → Hombro · estómago → Abdomen
+    antebrazo, sangradura, codo → Brazo
+    palma, dorso, dedo, pulgar, meñique, nudillo, punta → Mano (la otra mano)
+
+ORIENTACION (opcional, versión futura):
+  Arriba, Abajo, Adentro, Afuera, Centro, Izquierda, Derecha, Oblicua
+
+MOVIMIENTO (opcional, versión futura):
+  Recto, Arco, Circular, Zigzag, Ondulante, Contacto, Desliza, Repetido,
+  Alternado, Giro, Dedos, Agitar
+
+
+Ejemplos (salida real del script)
+---------------------------------
+
+AVANZADO-B (B-P 52)
+  datos_fonologicos: configuracion «MD y MB B-P.11»
+                     ubicacion «MD de MB a la altura de la cabeza. MB a la altura del pecho.»
+{
+  "codigo": "B-P 52",
+  "glosa": "AVANZADO-B",
+  "METADATOS": {
+    "presencia": {
+      "cm_dominante": ["B-P"],
+      "cm_base": ["B-P"],
+      "ubicacion_dominante": ["Cabeza"],
+      "ubicacion_base": ["Pecho"]
+    },
+    "linea_temporal": [
+      { "orden": 1, "cm_dominante": "B-P", "cm_base": "B-P" }
+    ]
+  }
+}
+
+ABANDONAR-B (O-5), una sola mano: no lleva claves de mano base
+  datos_fonologicos: configuracion «Seña que pasa de O.5 a 5.4», ubicacion «Sobre la frente.»
+{
+  "codigo": "O-5",
+  "glosa": "ABANDONAR-B",
+  "METADATOS": {
+    "presencia": {
+      "cm_dominante": ["O", "5"],
+      "ubicacion_dominante": ["Frente"]
+    },
+    "linea_temporal": [
+      { "orden": 1, "cm_dominante": "O" },
+      { "orden": 2, "cm_dominante": "5" }
+    ]
+  }
+}
+
+CARRETILLA-DE-CARGA (S-25), seña compuesta: ubicación por momento
+  datos_fonologicos: configuracion «I. S.1; II. Configuración 1-I.1»
+                     ubicacion «I. A la altura del abdomen; II.Sobre la sien.»
+{
+  "codigo": "S-25",
+  "glosa": "CARRETILLA-DE-CARGA",
+  "METADATOS": {
+    "presencia": {
+      "cm_dominante": ["S", "1-I"],
+      "cm_base": ["S"],
+      "ubicacion_dominante": ["Sien", "Abdomen"],
+      "ubicacion_base": ["Abdomen"]
+    },
+    "linea_temporal": [
+      { "orden": 1, "cm_dominante": "S", "cm_base": "S",
+        "ubicacion_dominante": ["Abdomen"], "ubicacion_base": ["Abdomen"] },
+      { "orden": 2, "cm_dominante": "1-I", "ubicacion_dominante": ["Sien"] }
+    ]
+  }
+}

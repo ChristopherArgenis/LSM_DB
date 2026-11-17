@@ -51,6 +51,10 @@
       "type": "string", "minLength": 1,
       "description": "Nota sobre el uso cultural de la seña."
     },
+    "nota": {
+      "type": "string", "minLength": 1,
+      "description": "Excepciones de la entrada: lo que se advierte sobre la seña y no cabe en otra clave (uso restringido, diferencia con otra seña del mismo significado, duda de captura). Ej.: \"Es la seña de ABANDONAR que se usa para dejar un trabajo o una actividad.\"."
+    },
     "pagina": {
       "type": "integer", "minimum": 1,
       "description": "Página del PDF del diccionario donde aparece la seña."

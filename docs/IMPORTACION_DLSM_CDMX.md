@@ -13,7 +13,7 @@ python3 scripts/importar_dlsm_cdmx.py
 | Tabla | Filas | De dónde sale |
 |---|---|---|
 | `lengua` | 2 | "Lengua de Señas Mexicana" y "Español" |
-| `diccionario` | 1 | `completo`: "Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)". `autor`: "Lic. César Ernesto Escobedo Delgado (coordinador y editor)", según la página de créditos |
+| `diccionario` | 1 | `nombre_completo`: "Diccionario de Lengua de Señas Mexicana de la Ciudad de México (DLSM, 2017)". `autor`: "Lic. César Ernesto Escobedo Delgado (coordinador y editor)", según la página de créditos |
 | `tipo_sena` | 4 | `SM`, `SB`, `SS`, `SC` (columna *Tipo de Seña*) |
 | `sena` | 1,006 | Una por fila del Excel. `id_tipo` = tipo principal (`SC` si es compuesta) |
 | `sena_diccionario` | 1,006 | Una por seña, con todo el detalle en `datos_fonologicos` |
@@ -24,7 +24,7 @@ python3 scripts/importar_dlsm_cdmx.py
 
 ## Qué NO se llenó
 
-`glosa`, `sena_glosa`, `senante`, `video`, `sena_video`: el diccionario no trae esa información.
+`senante`, `video`, `sena_video`: el diccionario no trae esa información.
 La página de créditos nombra a las personas sordas que modelaron las señas en las fotos, pero no dice quién modeló cada seña ni su edad o perfil, así que tampoco se cargan en `senante`.
 La seña se identifica por `codigo` y `significado` dentro de `datos_fonologicos`.
 
@@ -87,3 +87,20 @@ Correcciones de errores del scraper:
 - **Tipo de seña.** `SM` y `SB` parecen ser monomanual y bimanual. `SS` en los datos son señas con las dos manos y una sola configuración (posiblemente "simétrica"). `SC` son las compuestas, con sus partes I, II, III. Conviene confirmar los nombres oficiales en la introducción del diccionario.
 - **Definiciones con varias acepciones** (`1. adv. … 2. adv. …`) se guardan en **una sola** fila de `definicion`, tal como vienen.
 - **La definición se guarda dos veces**: en el JSON (como en tu ejemplo) y en la tabla `definicion`, que es la que permite la consulta entre idiomas (A4). Se puede quitar del JSON si se prefiere no duplicarla.
+
+## Glosas (`sql/02b_glosas_dlsm_cdmx.sql`)
+
+El diccionario no trae glosas. `scripts/generar_glosas_dlsm_cdmx.py` construye una por seña a partir del *Significado* y llena `glosa` (1,006 filas, todas distintas, lengua LSM) y `sena_glosa`.
+
+| Regla | Significado | Glosa |
+|---|---|---|
+| Primera palabra en MAYÚSCULAS, sin puntuación, con guiones | `¿Por qué?` | `POR-QUÉ` |
+| | `Abajo – Debajo` | `ABAJO` |
+| Se agrega la letra de variante | `Casa (A)` / `Casa (B)` | `CASA-A` / `CASA-B` |
+| Si dos glosas coinciden, se agrega la aclaración del diccionario | `Crema (cosmético)` / `Crema (lácteo)` | `CREMA-COSMÉTICO` / `CREMA-LÁCTEO` |
+| | `Brasil (LSM)` / `Brasil (SSI)` | `BRASIL-LSM` / `BRASIL-SSI` |
+| Si siguen coincidiendo, se numeran en orden del diccionario | `Adorar` (B-P 15) / `Adorar` (A-21) | `ADORAR-1` / `ADORAR-2` |
+
+Quedaron numeradas 15 glosas, porque el diccionario no da nada que distinga esas señas: ABANDONAR (3), ADORAR, ALTO, CONSTITUCIÓN, NACIONAL, SEPARAR y VAGINA (2 cada una). Conviene revisarlas con alguien que conozca la LSM y cambiar el número por un rasgo descriptivo.
+
+Cada glosa se liga a su seña por código **y** significado, porque el código C-84 está repetido. El script se puede ejecutar más de una vez sin duplicar glosas. `autor` = "LSM_DB (generadas a partir del DLSM CDMX 2017)", porque las glosas no vienen del diccionario.

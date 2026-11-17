@@ -26,6 +26,7 @@ datos_fonologicos: {
   "representacion":     "str",  # Opcional.    Qué representa o imita la seña
   "definicion":         "str",  # Opcional.    Definición del diccionario (también va en la tabla definicion)
   "nota_cultural":      "str",  # Opcional.    Nota sobre el uso cultural
+  "nota":               "str",  # Opcional.    Excepciones de la entrada (lo que no cabe en otra clave)
   "pagina":             "int"   # Opcional.    Página del PDF del diccionario (>= 1)
 }
 ```
@@ -36,6 +37,28 @@ datos_fonologicos: {
 2. Todos los valores son texto **no vacío**, salvo `pagina`, que es un entero ≥ 1.
 3. Si un dato no existe, **se omite la clave**. No se usan `null` ni `""`.
 4. **No se aceptan otras claves.** Así se evitan variantes como `configuracion_manual` / `configuracion` / `config`, que harían que una búsqueda no encuentre la seña.
+
+### La clave `nota` (excepciones)
+
+`nota` guarda lo que hay que advertir sobre una entrada y no cabe en ninguna otra clave. Por ejemplo:
+
+- uso restringido: «Es la seña de ABANDONAR que se usa para dejar un trabajo o una actividad.»;
+- diferencias con otra seña del mismo significado: «Igual a CASA-A, pero la mano cambia de B-P.2 a B-P.12.»;
+- problemas de la fuente: «El Excel de origen corta el ejemplo de uso ("Él desea…").».
+
+Es una sola clave de texto para no crear muchas claves parecidas (`observacion`, `comentario`, `excepcion`…), que es justo lo que la regla 4 evita. Va dentro del JSONB porque la excepción es de la seña *según un diccionario*: otro diccionario puede no tenerla.
+
+```sql
+-- Agregar una nota a una entrada
+UPDATE lsm.sena_diccionario
+SET datos_fonologicos = datos_fonologicos || '{"nota": "Es la seña de ABANDONAR que se usa para dejar un trabajo o una actividad."}'
+WHERE datos_fonologicos ->> 'codigo' = 'S-4';
+
+-- Ver todas las excepciones anotadas
+SELECT datos_fonologicos ->> 'codigo' AS codigo, datos_fonologicos ->> 'nota' AS nota
+FROM lsm.sena_diccionario
+WHERE datos_fonologicos ? 'nota';
+```
 
 ### ¿Por qué estos campos son obligatorios?
 

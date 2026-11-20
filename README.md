@@ -36,7 +36,7 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 | `docs/BITACORA.md` | Registro de discusiones y decisiones abiertas (mesa redonda pendiente) |
 | `docs/img/diagrama_er.png` | Diagrama entidad-relación actualizado |
 | `docs/img/modelo_er_chen.drawio` | Modelo entidad-relación en notación Chen (draw.io), sin tablas de cruce |
-| `docs/img/diagrama_er_cardinalidades.drawio` | Diagrama entidad-relación: entidades con atributos y cardinalidades 1/N/M (draw.io) |
+| `docs/img/diagrama_er_cardinalidades.drawio` | Diagrama entidad-relación en notación pata de gallo: entidades con atributos y cardinalidades 1/N/M, sin rombos (draw.io) |
 | `docs/MANUAL_RESPALDO.md` (y `.pdf`) | Respaldo, rollback y mudanza de la base: por CMD o por DBeaver |
 | `metadatos/generar_metadatos.sql` | Genera METADATOS (JSON aparte, fuera de la base) a partir de `datos_fonologicos`. Solo SELECT |
 | `metadatos/esquema_metadatos.txt` | Esquema de METADATOS: claves, obligatorias/opcionales, listas cerradas y ejemplos |

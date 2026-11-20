@@ -35,8 +35,9 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 | `docs/EJERCICIOS_ANOTACION_MANUAL.md` | Ejercicios para resolver consultas a mano, con soluciones |
 | `docs/BITACORA.md` | Registro de discusiones y decisiones abiertas (mesa redonda pendiente) |
 | `docs/img/diagrama_er.png` | Diagrama entidad-relación actualizado |
-| `docs/img/diagrama_er_chen.drawio` | Diagrama ER en notación Chen (draw.io), sin tablas de cruce |
-| `docs/MANUAL_RESPALDO.md` | Respaldo, rollback y mudanza de la base: por CMD o por DBeaver |
+| `docs/img/modelo_er_chen.drawio` | Modelo entidad-relación en notación Chen (draw.io), sin tablas de cruce |
+| `docs/img/diagrama_er_cardinalidades.drawio` | Diagrama entidad-relación: entidades con atributos y cardinalidades 1/N/M (draw.io) |
+| `docs/MANUAL_RESPALDO.md` (y `.pdf`) | Respaldo, rollback y mudanza de la base: por CMD o por DBeaver |
 | `metadatos/generar_metadatos.sql` | Genera METADATOS (JSON aparte, fuera de la base) a partir de `datos_fonologicos`. Solo SELECT |
 | `metadatos/esquema_metadatos.txt` | Esquema de METADATOS: claves, obligatorias/opcionales, listas cerradas y ejemplos |
 | `metadatos/esquema_metadatos.sql` | El mismo esquema en notación SQL (tipos y dominios; se deshace con ROLLBACK) |

@@ -20,6 +20,13 @@
 --      · Opción B: un solo valor con todo el JSON. Clic derecho en la
 --        celda → Copiar, pégalo en un archivo y guárdalo como
 --        metadatos.json.
+--        Ojo: «Exportar datos › JSON» de DBeaver mete el valor entre
+--        comillas y escapa todo con \" : no lo uses para este archivo.
+--
+-- Forma más segura de sacar el archivo (CMD, con la Opción B activa):
+--   cd "C:\Program Files\PostgreSQL\18\bin"
+--   psql -U postgres -d lsm_db -qAt -f "ruta\generar_metadatos.sql" -o "ruta\metadatos.json"
+--   (-q quita los mensajes, -A y -t dejan solo el valor, sin tabla).
 --
 -- Parámetro: id del diccionario a procesar (hoy 1 = DLSM CDMX 2017).
 -- Para otro diccionario, cambia ese 1

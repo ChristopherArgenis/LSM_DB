@@ -44,9 +44,9 @@ Si tu base se creó antes y **no quieres borrarla ni volver a cargarla**, usa el
 
 | Archivo | Qué hace |
 |---|---|
-| `2026-11-25_actualizar_a_diagrama_actual.sql` | Lleva la base al diagrama actual: crea `definicion_video` y su FK en `definicion`, agrega `sena_diccionario.id_lengua` si falta y pasa `mano_dominante` de `video` a `senante`. |
+| `2026-11-25_definicion_video_y_mano_dominante.sql` | Crea `definicion_video`, agrega `id_definicion_video` a `definicion` con su relación (FK) y pasa `mano_dominante` de `video` a `senante`. |
 
-En DBeaver: ábrelo conectado a tu base y ejecútalo con **Alt+X**. Es un solo bloque (si algo falla, no cambia nada), se puede correr más de una vez y avisa en la salida qué aplicó y qué ya estaba. Haz un respaldo antes.
+En DBeaver: ábrelo conectado a tu base y ejecútalo con **Alt+X**. Va entre `BEGIN` y `COMMIT` (si algo falla, no cambia nada) y al final muestra las columnas nuevas para comprobarlo. Córrelo una sola vez. Haz un respaldo antes.
 
 Una base nueva no lo necesita: `01_schema.sql` ya la crea así.
 

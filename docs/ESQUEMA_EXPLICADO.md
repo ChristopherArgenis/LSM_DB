@@ -57,6 +57,7 @@ La persona que ejecuta la seña en un video.
 | `id_senante` | entero, PK | Identificador |
 | `edad` | entero ≥ 0 | Edad al grabar |
 | `perfil_nativo` | texto | Si es señante nativo, de qué comunidad, etc. |
+| `mano_dominante` | texto | Derecha o izquierda (es de la persona, no de cada video) |
 
 ## El centro: `sena`
 
@@ -168,7 +169,6 @@ Una grabación.
 | Columna | Tipo | Significado |
 |---|---|---|
 | `id_video` | entero, PK | Identificador |
-| `mano_dominante` | texto | Derecha o izquierda |
 | `tipo_de_toma` | texto | Frontal, lateral… |
 | `path` | texto, obligatorio | Ruta del archivo |
 | `fecha` | fecha | Fecha de grabación |

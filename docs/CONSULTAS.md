@@ -56,7 +56,7 @@ En cuanto se carguen definiciones en inglés ligadas a las mismas señas, A4 fun
 | Qué diccionario dio una definición | `definicion` no se liga a `diccionario` (se usa el campo `autor`) |
 | Ejemplos de uso u oraciones | No hay tablas ni campos para ello |
 | Categoría gramatical | Solo se puede deducir del inicio de la definición (`sust.`, `v.`, … en K5) |
-| Nombre, sexo, región o lengua materna del señante | `senante` solo tiene `edad` y `perfil_nativo` (texto libre) |
+| Nombre, sexo, región o lengua materna del señante | `senante` solo tiene `edad`, `perfil_nativo` (texto libre) y `mano_dominante` |
 | Qué persona modeló cada seña en el diccionario | No hay relación seña ↔ señante; solo video ↔ señante |
 | En qué segundo de un video aparece cada seña | `sena_video` no tiene tiempo de inicio/fin |
 | Historial de cambios / quién capturó qué | Solo `glosa` y `definicion` tienen `autor` y `fecha` |

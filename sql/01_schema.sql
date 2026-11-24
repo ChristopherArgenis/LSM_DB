@@ -100,10 +100,13 @@ CREATE TABLE diccionario (
 -- ---------------------------------------------------------------------
 -- SEÑANTE
 -- ---------------------------------------------------------------------
+-- mano_dominante es del señante (no del video): la persona es diestra o
+-- zurda en todas sus grabaciones.
 CREATE TABLE senante (
-    id_senante     INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    edad           INTEGER CHECK (edad >= 0),
-    perfil_nativo  VARCHAR(100)
+    id_senante      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    edad            INTEGER CHECK (edad >= 0),
+    perfil_nativo   VARCHAR(100),
+    mano_dominante  VARCHAR(20)
 );
 
 -- ---------------------------------------------------------------------
@@ -111,7 +114,6 @@ CREATE TABLE senante (
 -- ---------------------------------------------------------------------
 CREATE TABLE video (
     id_video        INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    mano_dominante  VARCHAR(20),
     tipo_de_toma    VARCHAR(50),
     path            TEXT NOT NULL,
     fecha           DATE,

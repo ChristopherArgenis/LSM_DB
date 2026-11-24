@@ -38,6 +38,18 @@ Requieren los pasos 1 a 3. En DBeaver, ejecuta primero la línea `SET search_pat
 
 Los resultados de todas están en `docs/SALIDAS.md` (generado por `scripts/generar_salidas.py`).
 
+## migraciones/: actualizar una base que ya tienes
+
+Si tu base se creó antes y **no quieres borrarla ni volver a cargarla**, usa el archivo de `migraciones/` en lugar de repetir los pasos 1 a 3:
+
+| Archivo | Qué hace |
+|---|---|
+| `2026-11-25_actualizar_a_diagrama_actual.sql` | Lleva la base al diagrama actual: crea `definicion_video` y su FK en `definicion`, agrega `sena_diccionario.id_lengua` si falta y pasa `mano_dominante` de `video` a `senante`. |
+
+En DBeaver: ábrelo conectado a tu base y ejecútalo con **Alt+X**. Es un solo bloque (si algo falla, no cambia nada), se puede correr más de una vez y avisa en la salida qué aplicó y qué ya estaba. Haz un respaldo antes.
+
+Una base nueva no lo necesita: `01_schema.sql` ya la crea así.
+
 ## Respaldo y mudanza
 
 Ver `docs/MANUAL_RESPALDO.md` (o el `.pdf`).

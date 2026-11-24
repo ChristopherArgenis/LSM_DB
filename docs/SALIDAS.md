@@ -853,7 +853,7 @@ ORDER BY 2 DESC;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT g.glosa, v.path, v.tipo_de_toma, v.mano_dominante, st.id_senante, st.perfil_nativo
+SELECT g.glosa, v.path, v.tipo_de_toma, st.id_senante, st.mano_dominante, st.perfil_nativo
 FROM glosa g
 JOIN sena_glosa sg        ON sg.id_glosa = g.id_glosa
 JOIN sena_diccionario sdc ON sdc.id_sena = sg.id_sena
@@ -929,10 +929,11 @@ HAVING COUNT(DISTINCT v.id_senante) > 1;
 <details><summary>SQL</summary>
 
 ```sql
-SELECT mano_dominante, tipo_de_toma, COUNT(*) AS videos
-FROM video
-GROUP BY mano_dominante, tipo_de_toma
-ORDER BY mano_dominante, tipo_de_toma;
+SELECT st.mano_dominante, v.tipo_de_toma, COUNT(*) AS videos
+FROM video v
+JOIN senante st ON st.id_senante = v.id_senante
+GROUP BY st.mano_dominante, v.tipo_de_toma
+ORDER BY st.mano_dominante, v.tipo_de_toma;
 ```
 
 </details>

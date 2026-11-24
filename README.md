@@ -20,6 +20,7 @@ Las carpetas `sql/`, `scripts/` y `metadatos/` tienen su propio `README.md` con 
 | `sql/05_consultas_limitaciones.sql` | 13 límites del diseño de la base (independientes del diccionario), con demostración |
 | `sql/06_consultas_api.sql` | Funciones `api.*` que devuelven JSON, como endpoints de una API |
 | `sql/07_limitaciones_revisadas.sql` | Las 6 limitaciones de la presentación, revisadas con consultas |
+| `sql/migraciones/` | Actualiza una base ya creada al diagrama actual, sin borrarla (ver `sql/README.md`) |
 | `docs/SALIDAS.md` | Resultados de cada consulta. **Generado** por `scripts/generar_salidas.py` |
 | `data/LSM_diccionario_Scraper.xlsx` | Scrapeo original del diccionario |
 | `scripts/importar_dlsm_cdmx.py` | Convierte el Excel en `02_datos_dlsm_cdmx.sql` |
@@ -35,7 +36,7 @@ Las carpetas `sql/`, `scripts/` y `metadatos/` tienen su propio `README.md` con 
 | `docs/TRABAJO_FUTURO.md` | Verbos, señas compuestas, metadata discretizada y otros diccionarios |
 | `docs/EJERCICIOS_ANOTACION_MANUAL.md` | Ejercicios para resolver consultas a mano, con soluciones |
 | `docs/BITACORA.md` | Registro de discusiones y decisiones abiertas (mesa redonda pendiente) |
-| `docs/img/diagrama_er.png` | Diagrama entidad-relación actualizado |
+| `docs/img/diagrama_er.png` | Diagrama entidad-relación actual (con `definicion_video`) |
 | `docs/img/modelo_er_chen.drawio` | Modelo entidad-relación en notación Chen (draw.io), sin tablas de cruce |
 | `docs/img/diagrama_er_cardinalidades.drawio` | Diagrama entidad-relación en notación pata de gallo: entidades con atributos y cardinalidades 1/N/M, sin rombos (draw.io) |
 | `docs/MANUAL_RESPALDO.md` (y `.pdf`) | Respaldo, rollback y mudanza de la base: por CMD o por DBeaver |
@@ -84,4 +85,5 @@ python3 scripts/importar_dlsm_cdmx.py
 5. **`sena_video.id_sena_video`** aparece como FK pero subrayado; se implementa como PK.
 6. **`sena_diccionario.id_lengua`** (relación «identifica») repite la lengua de la seña a propósito: es una redundancia para optimizar las consultas por lengua. La consulta de control I3 vigila que coincida con `sena.id_lengua`.
 7. **`definicion_video`** (`id_definicion_video`, `path`): el video de una definición. `definicion.id_definicion_video` es la FK, opcional.
-8. Se agregaron restricciones `UNIQUE` en las tablas intermedias, índices sobre las FK, un índice GIN sobre `datos_fonologicos` y la validación del JSON (`docs/DATOS_FONOLOGICOS.md`).
+8. **`mano_dominante`** está en `senante`, no en `video`: es de la persona.
+9. Se agregaron restricciones `UNIQUE` en las tablas intermedias, índices sobre las FK, un índice GIN sobre `datos_fonologicos` y la validación del JSON (`docs/DATOS_FONOLOGICOS.md`).

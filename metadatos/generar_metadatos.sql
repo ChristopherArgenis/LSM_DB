@@ -10,23 +10,25 @@
 --
 -- Esquema que sigue: metadatos/esquema_metadatos.txt (y .sql).
 --
--- Cómo usarlo en DBeaver:
---   1. Abre este archivo en un editor SQL conectado a la base.
---   2. Ejecuta TODO el archivo con Alt+X («Ejecutar script»).
---      Es una sola consulta larga (WITH …): si usas Ctrl+Enter,
---      selecciona antes todo el texto (Ctrl+A).
---   3. Al final del archivo eliges la salida:
---      · Opción A: una fila por seña (código, glosa, metadatos).
---      · Opción B: un solo valor con todo el JSON. Clic derecho en la
---        celda → Copiar, pégalo en un archivo y guárdalo como
---        metadatos.json.
---        Ojo: «Exportar datos › JSON» de DBeaver mete el valor entre
---        comillas y escapa todo con \" : no lo uses para este archivo.
+-- Requisitos: la base con el esquema lsm y el DLSM cargados
+-- (sql/01_schema.sql, sql/02_datos_dlsm_cdmx.sql, sql/02b_glosas_dlsm_cdmx.sql).
 --
--- Forma más segura de sacar el archivo (CMD, con la Opción B activa):
---   cd "C:\Program Files\PostgreSQL\18\bin"
---   psql -U postgres -d lsm_db -qAt -f "ruta\generar_metadatos.sql" -o "ruta\metadatos.json"
---   (-q quita los mensajes, -A y -t dejan solo el valor, sin tabla).
+-- CÓMO GENERAR metadatos.json (forma recomendada, la reproducible):
+--   · Windows: doble clic en metadatos/exportar_metadatos.bat
+--   · O a mano, en CMD:
+--       set PGCLIENTENCODING=UTF8
+--       "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -d lsm_db -v ON_ERROR_STOP=1 -qAt -f generar_metadatos.sql -o metadatos.json
+--   · Linux / macOS:
+--       PGCLIENTENCODING=UTF8 psql -U postgres -d lsm_db -v ON_ERROR_STOP=1 -qAt -f generar_metadatos.sql -o metadatos.json
+--   -q quita mensajes; -A y -t dejan solo el valor (sin tabla ni encabezado);
+--   PGCLIENTENCODING=UTF8 conserva acentos y la Ñ en el archivo.
+--   Resultado: un arreglo JSON válido, una seña por línea.
+--
+-- CÓMO REVISARLO EN DBEAVER (sin generar el archivo):
+--   Abre este archivo, ejecútalo todo con Alt+X y mira la celda.
+--   Para ver una fila por seña, usa la SALIDA DE REVISIÓN del final.
+--   No uses «Exportar datos › JSON» de DBeaver: mete el resultado entre
+--   comillas y escapa todo con \" (el archivo deja de ser JSON útil).
 --
 -- Parámetro: id del diccionario a procesar (hoy 1 = DLSM CDMX 2017).
 -- Para otro diccionario, cambia ese 1
@@ -269,16 +271,19 @@ resultado AS (
       JOIN presencia p ON p.id = f.id
 )
 -- ---------------------------------------------------------------------
--- SALIDA. Deja activa SOLO UNA de las dos opciones:
+-- SALIDA PARA EL ARCHIVO (activa): todo el JSON en un solo valor de
+-- texto, una seña por línea, ordenado por glosa. Es lo que escribe
+-- exportar_metadatos.bat en metadatos.json.
+SELECT '[' || E'\n'
+       || string_agg('  ' || json_build_object('codigo', codigo,
+                                               'glosa', glosa,
+                                               'METADATOS', metadatos)::text,
+                     E',\n' ORDER BY glosa)
+       || E'\n]' AS metadatos_json
+  FROM resultado;
 --
--- Opción A (activa): una fila por seña, para revisar en la tabla.
-SELECT codigo, glosa, metadatos
-  FROM resultado
- ORDER BY glosa;
---
--- Opción B: todo en un solo valor JSON, listo para guardarse como
--- metadatos.json. Comenta la Opción A (las 3 líneas del SELECT) y
--- quita los «--» de las 3 líneas siguientes:
--- SELECT json_agg(json_build_object('codigo', codigo, 'glosa', glosa, 'METADATOS', metadatos)
---                 ORDER BY glosa) AS metadatos_json
---   FROM resultado;
+-- SALIDA DE REVISIÓN (para DBeaver): una fila por seña. Para usarla,
+-- pon «--» al SELECT de arriba (sus 7 líneas) y quítaselo a estas 3:
+-- SELECT codigo, glosa, metadatos
+--   FROM resultado
+--  ORDER BY glosa;

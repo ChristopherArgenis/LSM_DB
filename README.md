@@ -39,6 +39,8 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 | `docs/img/diagrama_er_cardinalidades.drawio` | Diagrama entidad-relación en notación pata de gallo: entidades con atributos y cardinalidades 1/N/M, sin rombos (draw.io) |
 | `docs/MANUAL_RESPALDO.md` (y `.pdf`) | Respaldo, rollback y mudanza de la base: por CMD o por DBeaver |
 | `metadatos/generar_metadatos.sql` | Genera METADATOS (JSON aparte, fuera de la base) a partir de `datos_fonologicos`. Solo SELECT |
+| `metadatos/exportar_metadatos.bat` | Windows: genera `metadatos/metadatos.json` con un doble clic. Pasos completos en `metadatos/README.md` |
+| `metadatos/metadatos.json` | METADATOS de las 1,006 señas, una por línea |
 | `metadatos/esquema_metadatos.txt` | Esquema de METADATOS: claves, obligatorias/opcionales, listas cerradas y ejemplos |
 | `metadatos/esquema_metadatos.sql` | El mismo esquema en notación SQL (tipos y dominios; se deshace con ROLLBACK) |
 

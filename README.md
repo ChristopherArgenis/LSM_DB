@@ -8,9 +8,11 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 
 ## Estructura
 
+Las carpetas `sql/`, `scripts/` y `metadatos/` tienen su propio `README.md` con los pasos para usarlas.
+
 | Archivo | Contenido |
 |---|---|
-| `sql/01_schema.sql` | Crea el esquema `lsm`: 14 tablas, llaves, índices y validación del JSON |
+| `sql/01_schema.sql` | Crea el esquema `lsm`: 15 tablas, llaves, índices y validación del JSON |
 | `sql/02_datos_dlsm_cdmx.sql` | Diccionario LSM CDMX 2017 (1,006 señas). **Generado**, no editar a mano |
 | `sql/02b_glosas_dlsm_cdmx.sql` | Una glosa por seña (1,006), construida del significado. **Generado** |
 | `sql/03_consultas.sql` | Catálogo completo de consultas (A1…K6), con glosas |
@@ -18,7 +20,7 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 | `sql/05_consultas_limitaciones.sql` | 13 límites del diseño de la base (independientes del diccionario), con demostración |
 | `sql/06_consultas_api.sql` | Funciones `api.*` que devuelven JSON, como endpoints de una API |
 | `sql/07_limitaciones_revisadas.sql` | Las 6 limitaciones de la presentación, revisadas con consultas |
-| `sql/migraciones/` | Cambios para bases creadas antes (p. ej. quitar `sena_diccionario.id_lengua`) |
+| `sql/migraciones/` | Actualiza una base ya creada al diagrama actual, sin borrarla (ver `sql/README.md`) |
 | `docs/SALIDAS.md` | Resultados de cada consulta. **Generado** por `scripts/generar_salidas.py` |
 | `data/LSM_diccionario_Scraper.xlsx` | Scrapeo original del diccionario |
 | `scripts/importar_dlsm_cdmx.py` | Convierte el Excel en `02_datos_dlsm_cdmx.sql` |
@@ -34,11 +36,13 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 | `docs/TRABAJO_FUTURO.md` | Verbos, señas compuestas, metadata discretizada y otros diccionarios |
 | `docs/EJERCICIOS_ANOTACION_MANUAL.md` | Ejercicios para resolver consultas a mano, con soluciones |
 | `docs/BITACORA.md` | Registro de discusiones y decisiones abiertas (mesa redonda pendiente) |
-| `docs/img/diagrama_er.png` | Diagrama entidad-relación actualizado |
+| `docs/img/diagrama_er.png` | Diagrama entidad-relación actual (con `definicion_video`) |
 | `docs/img/modelo_er_chen.drawio` | Modelo entidad-relación en notación Chen (draw.io), sin tablas de cruce |
 | `docs/img/diagrama_er_cardinalidades.drawio` | Diagrama entidad-relación en notación pata de gallo: entidades con atributos y cardinalidades 1/N/M, sin rombos (draw.io) |
 | `docs/MANUAL_RESPALDO.md` (y `.pdf`) | Respaldo, rollback y mudanza de la base: por CMD o por DBeaver |
 | `metadatos/generar_metadatos.sql` | Genera METADATOS (JSON aparte, fuera de la base) a partir de `datos_fonologicos`. Solo SELECT |
+| `metadatos/exportar_metadatos.bat` | Windows: genera `metadatos/metadatos.json` con un doble clic. Pasos completos en `metadatos/README.md` |
+| `metadatos/metadatos.json` | METADATOS de las 1,006 señas, una por línea |
 | `metadatos/esquema_metadatos.txt` | Esquema de METADATOS: claves, obligatorias/opcionales, listas cerradas y ejemplos |
 | `metadatos/esquema_metadatos.sql` | El mismo esquema en notación SQL (tipos y dominios; se deshace con ROLLBACK) |
 
@@ -69,7 +73,7 @@ python3 scripts/importar_dlsm_cdmx.py
 
 - **Catálogos:** `lengua`, `diccionario`, `senante`, `tipo_sena` (un tipo por seña)
 - **Contenido por lengua:** `palabra`, `glosa`, `definicion`, `sena`
-- **Grabaciones:** `video`
+- **Grabaciones:** `video`, `definicion_video`
 - **Tablas intermedias:** `sena_palabra`, `sena_glosa`, `sena_definicion`, `sena_diccionario` (con `datos_fonologicos` JSONB validado), `sena_video`
 
 ## Diferencias con el diagrama
@@ -79,5 +83,7 @@ python3 scripts/importar_dlsm_cdmx.py
 3. **`palabra.id_lengua`** no está marcado como FK en el diagrama, pero la relación "Contiene" lo une con `lengua`; se declara FK.
 4. **`tipo_sena`** es un catálogo (`id_tipo_sena`, `tipo`) y `sena.id_tipo` es FK hacia él (corregido en el diagrama).
 5. **`sena_video.id_sena_video`** aparece como FK pero subrayado; se implementa como PK.
-6. **`sena_diccionario` ya no tiene `id_lengua`** (ni la relación «identifica»): la lengua de una entrada es la de su seña. Ver `docs/DECISIONES_DE_DISENO.md`.
-7. Se agregaron restricciones `UNIQUE` en las tablas intermedias, índices sobre las FK, un índice GIN sobre `datos_fonologicos` y la validación del JSON (`docs/DATOS_FONOLOGICOS.md`).
+6. **`sena_diccionario.id_lengua`** (relación «identifica») repite la lengua de la seña a propósito: es una redundancia para optimizar las consultas por lengua. La consulta de control I3 vigila que coincida con `sena.id_lengua`.
+7. **`definicion_video`** (`id_definicion_video`, `path`): el video de una definición. `definicion.id_definicion_video` es la FK, opcional.
+8. **`mano_dominante`** está en `senante`, no en `video`: es de la persona.
+9. Se agregaron restricciones `UNIQUE` en las tablas intermedias, índices sobre las FK, un índice GIN sobre `datos_fonologicos` y la validación del JSON (`docs/DATOS_FONOLOGICOS.md`).

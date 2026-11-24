@@ -10,3 +10,5 @@ Presentaciones del proyecto LSM_DB, en orden. Están publicadas como artefactos 
 | 16–20 nov 2026 | Avances | METADATOS y los 10 pares iguales, manual de respaldo y diagrama ER | [Abrir](https://claude.ai/artifact/3tTugSCYxW4zGm7KH6j4d9) |
 
 Cada presentación se puede descargar como PDF o .pptx desde su página.
+
+`poster_LSM_DB.png`: póster con todo el proyecto en una sola imagen.

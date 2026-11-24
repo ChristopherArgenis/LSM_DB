@@ -37,14 +37,13 @@ Las carpetas `sql/`, `scripts/` y `metadatos/` tienen su propio `README.md` con 
 | `docs/EJERCICIOS_ANOTACION_MANUAL.md` | Ejercicios para resolver consultas a mano, con soluciones |
 | `docs/BITACORA.md` | Registro de discusiones y decisiones abiertas (mesa redonda pendiente) |
 | `docs/img/diagrama_er.png` | Diagrama entidad-relación actual (con `definicion_video`) |
-| `docs/img/modelo_er_chen.drawio` | Modelo entidad-relación en notación Chen (draw.io), sin tablas de cruce |
-| `docs/img/diagrama_er_cardinalidades.drawio` | Diagrama entidad-relación en notación pata de gallo: entidades con atributos y cardinalidades 1/N/M, sin rombos (draw.io) |
 | `docs/MANUAL_RESPALDO.md` (y `.pdf`) | Respaldo, rollback y mudanza de la base: por CMD o por DBeaver |
 | `metadatos/generar_metadatos.sql` | Genera METADATOS (JSON aparte, fuera de la base) a partir de `datos_fonologicos`. Solo SELECT |
 | `metadatos/exportar_metadatos.bat` | Windows: genera `metadatos/metadatos.json` con un doble clic. Pasos completos en `metadatos/README.md` |
 | `metadatos/metadatos.json` | METADATOS de las 1,006 señas, una por línea |
 | `metadatos/esquema_metadatos.txt` | Esquema de METADATOS: claves, obligatorias/opcionales, listas cerradas y ejemplos |
 | `metadatos/esquema_metadatos.sql` | El mismo esquema en notación SQL (tipos y dominios; se deshace con ROLLBACK) |
+| `Presentaciones/README.md` | Lista de las presentaciones del proyecto, con fecha, tema y enlace |
 
 ## Instalación
 

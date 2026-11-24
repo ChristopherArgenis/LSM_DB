@@ -44,6 +44,14 @@ Qué hace cada opción: `-qAt` deja solo el JSON (sin mensajes, tabla ni encabez
 - Debe tener **1,006** señas. Por ejemplo, en Python: `len(json.load(open("metadatos.json", encoding="utf-8")))`.
 - No debe contener `\"`. Si aparece, el archivo se sacó con «Exportar datos › JSON» de DBeaver: vuelve a generarlo con `psql` como arriba.
 
+## Generarlo desde DBeaver
+
+1. Abre `generar_metadatos.sql` conectado a la base y ejecútalo con **Alt+X**. Sale **una sola celda** (`metadatos_json`).
+2. Selecciona esa celda y presiona **Shift+Enter**: se abre el editor del valor completo.
+3. En ese editor usa **Guardar en archivo** (*Save to file…*) y guárdalo como `metadatos.json`.
+   También sirve **Ctrl+A** y **Ctrl+C** dentro del editor, pegar en un editor de texto y guardar con codificación **UTF-8**.
+4. **No uses «Exportar datos» (Export data) ni copies desde la tabla de resultados:** DBeaver trata el valor como texto de una columna, lo encierra en comillas y escapa todo con `\"`.
+
 ## Revisar en DBeaver (sin generar el archivo)
 
 Abre `generar_metadatos.sql`, ejecútalo con **Alt+X** y mira la celda. Para ver una fila por seña, usa la **salida de revisión** que está comentada al final del script.

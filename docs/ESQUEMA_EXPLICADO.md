@@ -4,14 +4,14 @@ Este documento describe en texto cada tabla del esquema `lsm`: qué guarda, cóm
 
 ## La idea en una frase
 
-**La seña es el pivote.** Todo lo demás (palabras, glosas, definiciones, diccionarios y videos) se conecta a la seña, nunca entre sí.
+**La seña es el pivote.** Todo lo demás (palabras, glosas, definiciones, diccionarios y videos) se conecta a la seña, nunca entre sí. La única excepción es el video de una definición (`definicion_video`), que cuelga de su definición.
 
 ```
-            palabra ─┐
-              glosa ─┤
-         definicion ─┼── sena ── sena_diccionario ── diccionario
-                     │     │            │
-          tipo_sena ─┘   lengua     sena_video ── video ── senante
+                            palabra ─┐
+                              glosa ─┤
+    definicion_video ── definicion ─┼── sena ── sena_diccionario ── diccionario
+                                     │     │            │
+                          tipo_sena ─┘   lengua     sena_video ── video ── senante
 ```
 
 ## Dos ejes independientes: lengua y diccionario
@@ -100,6 +100,17 @@ El texto que explica el significado.
 | `definicion` | texto, obligatorio | Definición completa, con categoría («v. tr.», «sust. f.») |
 | `autor`, `fecha` | texto, fecha | Quién la redactó |
 | `id_lengua` | FK → `lengua` | Idioma de la definición |
+| `id_definicion_video` | FK → `definicion_video`, opcional | Video de la definición, si lo hay |
+
+### `definicion_video`
+El video de una definición (la definición dicha en señas).
+
+| Columna | Tipo | Significado |
+|---|---|---|
+| `id_definicion_video` | entero, PK | Identificador |
+| `path` | texto, obligatorio | Ruta del archivo de video |
+
+Una definición tiene a lo más un video; la liga está en `definicion.id_definicion_video`.
 
 ## Tablas intermedias (todas pasan por la seña)
 
@@ -120,11 +131,12 @@ Una fila es **una seña descrita por un diccionario**. Si dos diccionarios descr
 | `id_sena_diccionario` | entero, PK | Identificador de la entrada |
 | `id_sena` | FK → `sena` | La seña descrita |
 | `id_diccionario` | FK → `diccionario` | La fuente |
+| `id_lengua` | FK → `lengua` | Lengua de la entrada (la misma de su seña; ver abajo) |
 | `datos_fonologicos` | JSONB validado | Cómo se hace la seña según esa fuente |
 
 `UNIQUE (id_sena, id_diccionario)`: un diccionario describe una seña una sola vez.
 
-**Cambio del 2026-11-11:** se quitó `id_lengua` de esta tabla. La lengua de una entrada es siempre la de su seña (`sena.id_lengua`); tenerla dos veces era redundante y podía contradecirse. Ver [DECISIONES_DE_DISENO.md](DECISIONES_DE_DISENO.md).
+**`id_lengua` es una redundancia a propósito:** repite `sena.id_lengua` para que las consultas por lengua no tengan que pasar por `sena`. La consulta de control I3 vigila que ambas coincidan. Ver [DECISIONES_DE_DISENO.md](DECISIONES_DE_DISENO.md).
 
 ### `datos_fonologicos` y el nuevo campo `nota`
 

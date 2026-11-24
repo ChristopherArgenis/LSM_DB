@@ -1126,16 +1126,15 @@ ORDER BY g.glosa;
 
 *15 filas.*
 
-### <a id="i3"></a>I3. [CONTROL: vacía = sin problemas] Entradas cuyo diccionario y seña no existen (integridad del pivote). Antes comparaba sena_diccionario.id_lengua con sena.id_lengua; esa columna se quitó porque la lengua de la entrada es la de su seña.
+### <a id="i3"></a>I3. [CONTROL: vacía = sin problemas] Lengua de la entrada distinta de la lengua de la seña. sena_diccionario.id_lengua es una redundancia a propósito (para consultas por lengua): esta consulta vigila que no se contradiga.
 
 <details><summary>SQL</summary>
 
 ```sql
-SELECT sdc.id_sena_diccionario
+SELECT sdc.id_sena_diccionario, s.id_lengua AS lengua_sena, sdc.id_lengua AS lengua_entrada
 FROM sena_diccionario sdc
-LEFT JOIN sena s        ON s.id_sena = sdc.id_sena
-LEFT JOIN diccionario d ON d.id_diccionario = sdc.id_diccionario
-WHERE s.id_sena IS NULL OR d.id_diccionario IS NULL;
+JOIN sena s ON s.id_sena = sdc.id_sena
+WHERE s.id_lengua <> sdc.id_lengua;
 ```
 
 </details>

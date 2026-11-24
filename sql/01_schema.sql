@@ -26,14 +26,27 @@ CREATE TABLE lengua (
 );
 
 -- ---------------------------------------------------------------------
+-- DEFINICION_VIDEO  (DEFINICION "Tiene" DEFINICION_VIDEO, N:1)
+-- Video de la definición (la definición dicha en señas). Solo guarda la
+-- ruta del archivo; cada definición apunta a su video con
+-- definicion.id_definicion_video.
+-- ---------------------------------------------------------------------
+CREATE TABLE definicion_video (
+    id_definicion_video  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    path                 TEXT NOT NULL
+);
+
+-- ---------------------------------------------------------------------
 -- DEFINICION  (LENGUA "Contiene" DEFINICION, 1:N)
+-- id_definicion_video es opcional: una definición puede no tener video.
 -- ---------------------------------------------------------------------
 CREATE TABLE definicion (
-    id_definicion  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    definicion     TEXT NOT NULL,
-    autor          VARCHAR(150),
-    fecha          DATE,
-    id_lengua      INTEGER NOT NULL REFERENCES lengua (id_lengua)
+    id_definicion        INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    definicion           TEXT NOT NULL,
+    autor                VARCHAR(150),
+    fecha                DATE,
+    id_lengua            INTEGER NOT NULL REFERENCES lengua (id_lengua),
+    id_definicion_video  INTEGER REFERENCES definicion_video (id_definicion_video) ON DELETE SET NULL
 );
 
 -- ---------------------------------------------------------------------
@@ -169,14 +182,16 @@ LANGUAGE sql IMMUTABLE AS $$
 $$;
 
 -- SEÑA_DICCIONARIO
---   SENA "pertenece", DICCIONARIO "contiene"
---   No lleva id_lengua: la lengua de una entrada es la de su seña
---   (sena.id_lengua). Guardarla aquí también sería redundante y podría
---   contradecirse. Ver sql/migraciones/2026-11-11_quitar_lengua_sena_diccionario.sql.
+--   SENA "pertenece", DICCIONARIO "contiene", LENGUA "identifica"
+--   id_lengua repite la lengua de la seña (sena.id_lengua) a propósito:
+--   es una redundancia para optimizar las consultas por lengua, como
+--   indica el modelo entidad-relación. La consulta de control I3
+--   (sql/03_consultas.sql) revisa que ambas coincidan.
 CREATE TABLE sena_diccionario (
     id_sena_diccionario  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_sena              INTEGER NOT NULL REFERENCES sena (id_sena) ON DELETE CASCADE,
     id_diccionario       INTEGER NOT NULL REFERENCES diccionario (id_diccionario) ON DELETE CASCADE,
+    id_lengua            INTEGER NOT NULL REFERENCES lengua (id_lengua),
     datos_fonologicos    JSONB CONSTRAINT datos_fonologicos_validos
                          CHECK (valida_datos_fonologicos(datos_fonologicos)),
     UNIQUE (id_sena, id_diccionario)
@@ -197,6 +212,7 @@ CREATE TABLE sena_video (
 -- Índices sobre llaves foráneas (PostgreSQL no los crea solo)
 -- ---------------------------------------------------------------------
 CREATE INDEX idx_definicion_lengua        ON definicion (id_lengua);
+CREATE INDEX idx_definicion_video         ON definicion (id_definicion_video);
 CREATE INDEX idx_palabra_lengua           ON palabra (id_lengua);
 CREATE INDEX idx_palabra_lower            ON palabra (LOWER(palabra));
 CREATE INDEX idx_glosa_lengua             ON glosa (id_lengua);
@@ -207,6 +223,7 @@ CREATE INDEX idx_sena_definicion_def      ON sena_definicion (id_definicion);
 CREATE INDEX idx_sena_palabra_palabra     ON sena_palabra (id_palabra);
 CREATE INDEX idx_sena_glosa_glosa         ON sena_glosa (id_glosa);
 CREATE INDEX idx_sena_diccionario_dic     ON sena_diccionario (id_diccionario);
+CREATE INDEX idx_sena_diccionario_lengua  ON sena_diccionario (id_lengua);
 CREATE INDEX idx_sena_video_sd            ON sena_video (id_sena_diccionario);
 CREATE INDEX idx_sena_diccionario_fono    ON sena_diccionario USING GIN (datos_fonologicos);
 CREATE INDEX idx_sena_diccionario_codigo  ON sena_diccionario ((datos_fonologicos ->> 'codigo'));

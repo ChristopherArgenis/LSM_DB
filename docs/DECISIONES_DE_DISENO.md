@@ -38,24 +38,22 @@ WHERE g.glosa = 'CASA-A' AND d.nombre_completo LIKE 'Diccionario de LSM de [ciud
 
 El resultado es que la misma seña tiene **dos descripciones**, una por diccionario, y se pueden comparar.
 
-## 2. La lengua se guarda una sola vez por seña
+## 2. La lengua de la entrada se repite a propósito (`sena_diccionario.id_lengua`)
 
-**Pregunta.** `sena_diccionario` tenía `id_lengua` (relación «identifica» con LENGUA). ¿Hace falta?
+**Pregunta.** `sena_diccionario` tiene `id_lengua` (relación «identifica» con LENGUA), aunque la lengua ya está en `sena.id_lengua`. ¿Se queda?
 
-**Respuesta: no; se quitó el 2026-11-11.**
+**Respuesta: sí, se queda.** El 2026-11-11 se había quitado por redundante; después, el modelo entidad-relación corregido la conserva como **redundancia para optimizar las consultas por lengua**, así que se regresó.
 
-**Por qué.** La lengua de una entrada de diccionario es, por definición, la lengua de la seña que describe, y esa ya está en `sena.id_lengua`. Guardarla dos veces es una dependencia transitiva (va contra la Tercera Forma Normal) y ninguna regla obligaba a que ambas coincidieran, así que podían contradecirse al cargar más lenguas.
-
-**Cómo se hizo.** El script [`sql/migraciones/2026-11-11_quitar_lengua_sena_diccionario.sql`](../sql/migraciones/2026-11-11_quitar_lengua_sena_diccionario.sql) primero comprueba que las 1,006 entradas coinciden con su seña y solo entonces borra la columna, su llave foránea y su índice. Si alguna no coincide, se detiene sin tocar nada. `01_schema.sql` ya crea la tabla sin esa columna, y el diagrama se actualizó ([`img/diagrama_er.png`](img/diagrama_er.png)).
-
-**Cómo se consulta ahora la lengua de una entrada:**
+**Qué se gana.** Filtrar las entradas de un diccionario por lengua sin pasar por `sena`:
 
 ```sql
-SELECT l.nombre_completo
+SELECT sdc.datos_fonologicos ->> 'codigo'
 FROM lsm.sena_diccionario sdc
-JOIN lsm.sena s   ON s.id_sena = sdc.id_sena
-JOIN lsm.lengua l ON l.id_lengua = s.id_lengua;
+JOIN lsm.lengua l ON l.id_lengua = sdc.id_lengua
+WHERE l.nombre_completo = 'Lengua de Señas Mexicana';
 ```
+
+**Qué se vigila.** Al estar dos veces, las dos lenguas podrían contradecirse. La consulta de control **I3** (`sql/03_consultas.sql`) lista las entradas cuya lengua no coincide con la de su seña; vacía significa que todo está bien (hoy: 0 filas). El límite L10 de `sql/05_consultas_limitaciones.sql` explica por qué la base no lo impide sola.
 
 ## 3. Las glosas homónimas se numeran (caso ABANDONAR)
 

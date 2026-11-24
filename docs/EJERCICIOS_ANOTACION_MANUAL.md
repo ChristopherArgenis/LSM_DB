@@ -272,7 +272,7 @@ WHERE p.palabra = 'Abandonar' AND d.definicion ILIKE '%ocupación%';
 - Lengua de la **seña:** `glosa` → `sena_glosa` → `sena` 107 → `id_lengua` **2** → Lengua de Señas Mexicana.
 - Idioma de la **definición:** `sena_definicion` → `definicion` 107 → `id_lengua` **1** → Español.
 
-**Idea clave:** la lengua se guarda en lo que describe. La seña es de LSM y el texto que la explica está en español. El diccionario no tiene lengua propia, por eso se quitó `id_lengua` de `sena_diccionario`.
+**Idea clave:** la lengua se guarda en lo que describe. La seña es de LSM y el texto que la explica está en español. El diccionario no tiene lengua propia. (`sena_diccionario.id_lengua` solo repite la lengua de la seña, para agilizar consultas.)
 
 ### E7. «bonita» → 0 resultados exactos; BONITO con búsqueda por raíz
 

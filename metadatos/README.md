@@ -46,11 +46,18 @@ Qué hace cada opción: `-qAt` deja solo el JSON (sin mensajes, tabla ni encabez
 
 ## Generarlo desde DBeaver
 
-1. Abre `generar_metadatos.sql` conectado a la base y ejecútalo con **Alt+X**. Sale **una sola celda** (`metadatos_json`).
-2. Selecciona esa celda y presiona **Shift+Enter**: se abre el editor del valor completo.
+**Por qué no sirve «Exportar datos».** Con *Exportar datos › JSON*, DBeaver trata el resultado como el texto de una columna: lo encierra entre comillas y escapa cada comilla de adentro con `\"`. El archivo queda como `"[{\"codigo\" : ...`, que ya no es el JSON que buscamos. La solución es guardar **el valor de la celda**, no exportar la tabla.
+
+1. Abre `generar_metadatos.sql` conectado a la base y ejecútalo con **Alt+X**. Sale **una sola celda**: `metadatos_json`.
+2. Selecciona esa celda y presiona **Shift+Enter**: se abre el editor con el valor completo.
 3. En ese editor usa **Guardar en archivo** (*Save to file…*) y guárdalo como `metadatos.json`.
-   También sirve **Ctrl+A** y **Ctrl+C** dentro del editor, pegar en un editor de texto y guardar con codificación **UTF-8**.
-4. **No uses «Exportar datos» (Export data) ni copies desde la tabla de resultados:** DBeaver trata el valor como texto de una columna, lo encierra en comillas y escapa todo con `\"`.
+   - Si no ves ese botón: **Ctrl+A** y **Ctrl+C** dentro del editor, pega en el Bloc de notas y guarda con **Codificación: UTF-8**.
+4. Comprueba el archivo:
+   - empieza con `[`, **no** con `"[`;
+   - tiene una seña por línea;
+   - no aparece ningún `\"`.
+
+Copiar directo desde la tabla de resultados también puede escapar el texto: abre siempre la celda con **Shift+Enter**.
 
 ## Revisar en DBeaver (sin generar el archivo)
 

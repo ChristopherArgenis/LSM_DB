@@ -8,6 +8,8 @@ Diccionario de Lengua de Señas Mexicana de la Ciudad de México (2017).
 
 ## Estructura
 
+Las carpetas `sql/`, `scripts/` y `metadatos/` tienen su propio `README.md` con los pasos para usarlas.
+
 | Archivo | Contenido |
 |---|---|
 | `sql/01_schema.sql` | Crea el esquema `lsm`: 14 tablas, llaves, índices y validación del JSON |

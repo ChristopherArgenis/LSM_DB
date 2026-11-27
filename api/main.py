@@ -145,11 +145,25 @@ if _META_PATH.exists():
 IMAGENES = AQUI / "imagenes"   # opcional: imagenes/<codigo>.png (ej. "B-P 62.png")
 
 
+EXT_MEDIA = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4", ".webm"}
+
+
+def _clave(texto):
+    """'B-P 62', 'BP_62' y 'b-p62' dan la misma clave: BP62."""
+    return "".join(c for c in texto.upper() if c.isalnum())
+
+
+# Índice de imágenes: busca en api/imagenes y sus subcarpetas
+INDICE_IMG = {}
+if IMAGENES.exists():
+    for f in IMAGENES.rglob("*"):
+        if f.suffix.lower() in EXT_MEDIA:
+            INDICE_IMG.setdefault(_clave(f.stem), f.relative_to(IMAGENES).as_posix())
+
+
 def imagen_de(codigo):
-    for ext in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4"):
-        if (IMAGENES / f"{codigo}{ext}").exists():
-            return f"/imagenes/{codigo}{ext}"
-    return None
+    ruta = INDICE_IMG.get(_clave(codigo or ""))
+    return f"/imagenes/{ruta}" if ruta else None
 
 
 @app.get("/api/visual/opciones")

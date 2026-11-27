@@ -1,2 +1,3 @@
-Pon aquí la imagen o el video de cada seña con su código como nombre,
-por ejemplo "B-P 62.png" o "A-69.mp4". La app la muestra sola.
+Aquí van las imágenes o videos de cada seña (esta carpeta no se sube a GitHub).
+El nombre del archivo debe ser el código de la seña: "B-P 62.png", "BP_62.jpg" o "A-69.mp4" sirven igual.
+Para cargar ilustraciones_lsm.zip:  python preparar_imagenes.py ruta\a\ilustraciones_lsm.zip

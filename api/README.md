@@ -35,7 +35,7 @@ Los resultados salen como tarjetas: la forma de la mano (naranja = mano principa
 
 **Ficha de la seña:** muestra la glosa en grande, sus palabras, la forma de la mano paso a paso (O ➜ 5 cuando cambia), el lugar en el cuerpo, el movimiento y, al final, el texto del diccionario.
 
-**Imágenes o videos:** guarda el archivo de cada seña en `api/imagenes/` con su código como nombre, por ejemplo `B-P 62.png` o `A-69.mp4`. La app lo muestra solo en la tarjeta y en la ficha.
+**Imágenes o videos:** descarga `ilustraciones_lsm.zip` de Drive y ejecuta `python preparar_imagenes.py ruta\al\ilustraciones_lsm.zip`. Las descomprime en `api/imagenes/` y te dice cuántas señas quedaron con imagen. El nombre de cada archivo debe ser el código de la seña (`B-P 62`, `BP_62` o `b-p62` sirven igual).
 
 La búsqueda con dibujos usa `metadatos/metadatos.json`. Si regeneras METADATOS, reinicia la API.
 

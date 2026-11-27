@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LSM_DB · Consulta</title>
+<style>
+  :root { --bg:#f6f4ee; --card:#fffdf8; --ink:#14213d; --soft:#4a5568; --acc:#b4501a; --acc2:#f2a65a; --line:#e2ded3; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui, 'Segoe UI', Arial, sans-serif; }
+  header { background:var(--ink); color:#f6f4ee; padding:24px 32px; }
+  header h1 { margin:0; font-size:32px; } header p { margin:4px 0 0; color:#bfc8d9; }
+  .stats { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+  .stat { background:#22325a; border-radius:12px; padding:8px 16px; } .stat b { color:var(--acc2); font-size:22px; }
+  main { display:grid; grid-template-columns:380px 1fr; gap:24px; padding:24px 32px; }
+  @media (max-width:900px){ main { grid-template-columns:1fr; padding:16px; } }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  h2 { font-size:18px; margin:0 0 10px; }
+  input, select, button { font:inherit; padding:9px 12px; border:1px solid var(--line); border-radius:8px; width:100%; margin-bottom:8px; background:#fff; }
+  button { background:var(--acc); color:#fff; border:none; cursor:pointer; font-weight:600; }
+  .tabs { display:flex; gap:6px; margin-bottom:12px; } .tabs button { background:#ece8dd; color:var(--ink); }
+  .tabs button.on { background:var(--ink); color:#fff; }
+  #lista { margin-top:12px; max-height:60vh; overflow:auto; }
+  .item { padding:10px 12px; border-radius:8px; cursor:pointer; border-bottom:1px solid var(--line); }
+  .item:hover, .item.on { background:#fbe3cc; } .item small { color:var(--soft); }
+  .vacio { color:var(--soft); }
+  .chip { display:inline-block; background:#ece8dd; border-radius:999px; padding:3px 12px; margin:2px; font-size:14px; }
+  dl { display:grid; grid-template-columns:180px 1fr; gap:6px 14px; } dt { font-weight:600; color:var(--acc); } dd { margin:0; }
+  .glosa { font-size:30px; font-weight:700; margin:0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>LSM_DB · Consulta de señas</h1>
+  <p>PostgreSQL → API → esta app. Diccionario de Lengua de Señas Mexicana.</p>
+  <div class="stats" id="stats"><span class="stat">Conectando con la API…</span></div>
+</header>
+<main>
+  <section class="panel">
+    <div class="tabs"><button id="tPal" class="on">Por palabra</button><button id="tFon">Por forma</button></div>
+    <form id="fPal">
+      <input id="q" placeholder="Ej.: casa, coche, abandonar" autofocus>
+      <button>Buscar</button>
+    </form>
+    <form id="fFon" hidden>
+      <input id="conf" placeholder="Configuración (ej.: B-P, A.1)">
+      <input id="ubi" placeholder="Ubicación (ej.: pecho, frente)">
+      <input id="mov" placeholder="Movimiento (ej.: arco, círculo)">
+      <select id="tipo"><option value="">Cualquier tipo de seña</option></select>
+      <button>Filtrar</button>
+    </form>
+    <div id="lista"><p class="vacio">Escribe una palabra para empezar.</p></div>
+  </section>
+  <section class="panel" id="ficha"><p class="vacio">Elige una seña de la lista para ver su ficha.</p></section>
+</main>
+<script>
+const API = location.origin.startsWith('http') ? '' : 'http://localhost:8000';
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pedir = async ruta => { const r = await fetch(API + ruta); if (!r.ok) throw new Error((await r.json()).detail || r.status); return r.json(); };
+
+pedir('/api/estadisticas').then(s => {
+  $('stats').innerHTML = Object.entries(s).map(([k,v]) => `<span class="stat"><b>${v.toLocaleString('es-MX')}</b> ${({senas:'señas'})[k] || k}</span>`).join('');
+}).catch(() => $('stats').innerHTML = '<span class="stat">⚠ No hay conexión con la API o con PostgreSQL</span>');
+pedir('/api/tipos').then(ts => ts.forEach(t => $('tipo').insertAdjacentHTML('beforeend', `<option value="${esc(t.tipo)}">${esc(t.tipo)} (${t.senas})</option>`)));
+
+function pestaña(pal) { $('fPal').hidden = !pal; $('fFon').hidden = pal; $('tPal').classList.toggle('on', pal); $('tFon').classList.toggle('on', !pal); }
+$('tPal').onclick = () => pestaña(true); $('tFon').onclick = () => pestaña(false);
+
+function mostrar(lista) {
+  $('lista').innerHTML = lista.length ? `<p class="vacio">${lista.length} resultado(s)</p>` + lista.map(s =>
+    `<div class="item" data-id="${s.id_sena}"><b>${esc(s.glosa)}</b> <small>· ${esc(s.codigo)} · ${esc(s.tipo)}</small><br><small>${esc(s.significado)}</small></div>`).join('')
+    : '<p class="vacio">Sin resultados.</p>';
+  document.querySelectorAll('.item').forEach(el => el.onclick = () => { document.querySelectorAll('.item').forEach(x => x.classList.remove('on')); el.classList.add('on'); ficha(el.dataset.id); });
+}
+const error = e => $('lista').innerHTML = `<p class="vacio">⚠ ${esc(e.message)}</p>`;
+
+$('fPal').onsubmit = e => { e.preventDefault(); const q = $('q').value.trim(); if (q) pedir('/api/buscar?q=' + encodeURIComponent(q)).then(mostrar).catch(error); };
+$('fFon').onsubmit = e => { e.preventDefault();
+  const p = new URLSearchParams({configuracion:$('conf').value, ubicacion:$('ubi').value, movimiento:$('mov').value, tipo:$('tipo').value});
+  pedir('/api/filtrar?' + p).then(mostrar).catch(error); };
+
+const NOMBRES = {codigo:'Código', significado:'Significado', tipo_sena:'Tipo de seña', configuracion:'Configuración', orientacion:'Orientación',
+  ubicacion:'Ubicación', movimiento:'Movimiento', rasgos_no_manuales:'Rasgos no manuales', representacion:'Representación',
+  definicion:'Definición', nota_cultural:'Nota cultural', nota:'Nota', pagina:'Página'};
+
+async function ficha(id) {
+  const s = await pedir('/api/senas/' + id);
+  $('ficha').innerHTML = `
+    <p class="glosa">${esc(s.glosa)}</p><p class="vacio">${esc(s.codigo)} · ${esc(s.significado)}</p>
+    <h2>Palabras en español</h2><div>${s.palabras.map(p => `<span class="chip">${esc(p)}</span>`).join('')}</div>
+    <h2 style="margin-top:16px">Definición</h2>${s.definiciones.map(d => `<p>${esc(d.definicion)}<br><small class="vacio">${esc(d.autor)} · ${esc(d.lengua)}</small></p>`).join('') || '<p class="vacio">Sin definición.</p>'}
+    ${s.diccionarios.map(d => `<h2 style="margin-top:16px">Cómo se hace · ${esc(d.diccionario)}</h2>
+      <dl>${Object.entries(d.datos_fonologicos).filter(([k]) => !['codigo','significado','definicion'].includes(k))
+        .map(([k,v]) => `<dt>${NOMBRES[k] || esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`).join('')}`;
+}
+</script>
+</body>
+</html>

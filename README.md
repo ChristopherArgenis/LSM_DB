@@ -44,6 +44,7 @@ Las carpetas `sql/`, `scripts/` y `metadatos/` tienen su propio `README.md` con 
 | `metadatos/esquema_metadatos.txt` | Esquema de METADATOS: claves, obligatorias/opcionales, listas cerradas y ejemplos |
 | `metadatos/esquema_metadatos.sql` | El mismo esquema en notación SQL (tipos y dominios; se deshace con ROLLBACK) |
 | `Presentaciones/README.md` | Lista de las presentaciones del proyecto, con fecha, tema y enlace |
+| `api/` | API (FastAPI) y app local de consulta. Pasos en `api/README.md` |
 
 ## Instalación
 

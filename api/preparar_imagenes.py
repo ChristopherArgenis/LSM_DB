@@ -1,13 +1,14 @@
 """Descomprime ilustraciones_lsm.zip en api/imagenes y dice cuántas señas quedaron con imagen.
 
-Uso:  python preparar_imagenes.py "C:\\Users\\...\\Downloads\\ilustraciones_lsm.zip"
+Uso:  python preparar_imagenes.py            (usa data/ilustraciones_lsm.zip)
+      python preparar_imagenes.py ruta\\al\\archivo.zip
 """
 import json, sys, zipfile
 from pathlib import Path
 
 AQUI = Path(__file__).parent
 destino = AQUI / "imagenes"
-zip_path = Path(sys.argv[1]) if len(sys.argv) > 1 else AQUI / "ilustraciones_lsm.zip"
+zip_path = Path(sys.argv[1]) if len(sys.argv) > 1 else AQUI.parent / "data" / "ilustraciones_lsm.zip"
 with zipfile.ZipFile(zip_path) as z:
     z.extractall(destino)
 

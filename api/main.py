@@ -197,6 +197,44 @@ def filtrar_visual(mano: str = "", zona: str = "", dos_manos: bool | None = None
     return [dict(f, imagen=imagen_de(f["codigo"]), metadatos=META.get(f["codigo"])) for f in filas]
 
 
+# ---------- Búsqueda fonológica con METADATOS ----------
+CAMPOS_META = ("cm_dominante", "cm_base", "ubicacion_dominante", "ubicacion_base")
+
+
+@app.get("/api/metadatos/opciones")
+def opciones_metadatos():
+    """Valores de lista cerrada de METADATOS (y tipo de seña), con cuántas señas tiene cada uno."""
+    from collections import Counter
+    cuenta = {c: Counter() for c in CAMPOS_META}
+    for m in META.values():
+        for c in CAMPOS_META:
+            cuenta[c].update(set(m["presencia"].get(c, [])))
+    res = {c: cuenta[c].most_common() for c in CAMPOS_META}
+    res["tipo"] = [[r["tipo"], r["senas"]] for r in tipos()]
+    return res
+
+
+@app.get("/api/metadatos/buscar")
+def buscar_metadatos(cm_dominante: str = "", cm_base: str = "", ubicacion_dominante: str = "",
+                     ubicacion_base: str = "", tipo: str = ""):
+    """Señas que cumplen TODOS los valores elegidos (cada uno debe aparecer en su campo de METADATOS)."""
+    pedidos = {"cm_dominante": cm_dominante, "cm_base": cm_base,
+               "ubicacion_dominante": ubicacion_dominante, "ubicacion_base": ubicacion_base}
+    pedidos = {k: v for k, v in pedidos.items() if v}
+    if not pedidos and not tipo:
+        raise HTTPException(400, "Elige al menos un rasgo.")
+    codigos = [c for c, m in META.items() if all(v in m["presencia"].get(k, []) for k, v in pedidos.items())]
+    if not codigos:
+        return []
+    sql = RESUMEN + " WHERE sd.datos_fonologicos->>'codigo' = ANY(%s)"
+    params = [codigos]
+    if tipo:
+        sql += " AND sd.datos_fonologicos->>'tipo_sena' = %s"
+        params.append(tipo)
+    filas = consulta(sql + " ORDER BY glosa LIMIT 1006", params)
+    return [dict(f, imagen=imagen_de(f["codigo"]), metadatos=META.get(f["codigo"])) for f in filas]
+
+
 # La app local (api/app/index.html) se sirve en http://localhost:8000/
 if IMAGENES.exists():
     app.mount("/imagenes", StaticFiles(directory=IMAGENES), name="imagenes")

@@ -35,6 +35,8 @@ Los resultados salen como tarjetas: la forma de la mano (naranja = mano principa
 
 **Ficha de la seña:** muestra la glosa en grande, sus palabras, la forma de la mano paso a paso (O ➜ 5 cuando cambia), el lugar en el cuerpo, el movimiento y, al final, el texto del diccionario.
 
+**Fotos de las formas de mano:** `app/manos/` tiene las 221 fotos de la *Tabla de las Configuraciones Manuales* del DLSM CDMX 2017, una por variante (`B-P_12.png` = B-P.12), con fondo transparente, e `indice.json` (código → archivo). Los botones de mano usan la variante .1 de cada familia; la ficha muestra las variantes exactas que dice el diccionario (por ejemplo O.5 → 5.4). Cubren 108 de los 117 códigos que aparecen en la base (98 % de las menciones; faltan P.13 y A.10, que no vienen en la tabla). Se extrajeron con `scripts/extraer_configuraciones_dlsm.py`. Las fotos son del DLSM: hay que darle el crédito al publicarlas.
+
 **Imágenes o videos:** descarga `ilustraciones_lsm.zip` de Drive y ejecuta `python preparar_imagenes.py ruta\al\ilustraciones_lsm.zip`. Las descomprime en `api/imagenes/` y te dice cuántas señas quedaron con imagen. El nombre de cada archivo debe ser el código de la seña (`B-P 62`, `BP_62` o `b-p62` sirven igual).
 
 La búsqueda con dibujos usa `metadatos/metadatos.json`. Si regeneras METADATOS, reinicia la API.

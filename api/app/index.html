@@ -22,9 +22,10 @@
   .paso i { font-style:normal; width:38px; height:38px; border-radius:50%; background:var(--ink); color:#fff; display:grid; place-items:center; }
   .visual { display:grid; grid-template-columns:1fr 300px; gap:24px; }
   @media (max-width:860px){ .visual { grid-template-columns:1fr; } main,.modos { padding-left:14px; padding-right:14px; } }
-  .manos { display:grid; grid-template-columns:repeat(auto-fill, minmax(86px,1fr)); gap:10px; }
+  .manos { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:10px; }
   .mano { aspect-ratio:1; border:3px solid var(--line); border-radius:16px; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px; }
-  .mano b { font-size:30px; line-height:1; } .mano small { font-size:14px; color:var(--soft); }
+  .mano img { height:64px; max-width:100%; object-fit:contain; }
+  .mano b { font-size:20px; line-height:1; } .mano small { font-size:14px; color:var(--soft); }
   .mano.on { border-color:var(--dom); background:var(--dom-bg); }
   .cuerpo { width:100%; max-width:300px; } .cuerpo .z { fill:#ece8dd; stroke:#b0ada4; stroke-width:1.5; cursor:pointer; }
   .cuerpo .z:hover { fill:#f6d5b8; } .cuerpo .z.on { fill:var(--dom); }
@@ -42,7 +43,8 @@
   .media { height:150px; border-radius:12px; background:var(--bg); display:flex; align-items:center; justify-content:center; gap:12px; overflow:hidden; }
   .media img, .media video { width:100%; height:100%; object-fit:contain; background:#fff; }
   .media .mini { width:70px; height:120px; }
-  .chipmano { display:inline-flex; align-items:center; justify-content:center; min-width:52px; height:52px; padding:0 8px; border-radius:12px; font-size:24px; font-weight:800; border:3px solid; }
+  .chipmano img { height:40px; } .foto { display:flex; flex-direction:column; align-items:center; gap:4px; font-weight:700; } .foto img { height:120px; background:#fff; border-radius:12px; padding:6px; }
+  .chipmano { display:inline-flex; align-items:center; justify-content:center; gap:4px; min-width:52px; height:52px; padding:0 8px; border-radius:12px; font-size:24px; font-weight:800; border:3px solid; }
   .chipmano.dom { border-color:var(--dom); background:var(--dom-bg); } .chipmano.base { border-color:var(--base); background:var(--base-bg); border-style:dashed; }
   .tarjeta .g { font-size:22px; font-weight:800; } .tarjeta .s { font-size:16px; color:var(--soft); }
   .vacio { color:var(--soft); font-size:20px; text-align:center; padding:30px; }
@@ -165,10 +167,13 @@ let conteoZonas = {};
 pedir('/api/estadisticas').then(s => $('stats').innerHTML = `<span class="stat">${s.senas.toLocaleString('es-MX')}</span> señas del diccionario`)
   .catch(() => $('stats').textContent = '⚠ Sin conexión con la base de datos');
 
+let FOTOS = {};
+const imgFam = f => { const k = FOTOS[f + '.1'] ? f + '.1' : Object.keys(FOTOS).find(c => c.startsWith(f + '.')); return k ? `<img src="manos/${FOTOS[k]}" alt="">` : ''; };
+const fotosListas = fetch('manos/indice.json').then(r => r.json()).then(j => FOTOS = j).catch(() => {});
 dibujarCuerpoSel();
 $('manos').innerHTML = '<p class="ayuda">Las formas de mano aparecen cuando la app se conecta con la base de datos.</p>';
-pedir('/api/visual/opciones').then(o => {
-  $('manos').innerHTML = o.manos.map(([m, n]) => `<button class="mano" data-m="${esc(m)}" aria-pressed="false" aria-label="Mano ${esc(m)}, ${n} señas"><b>${esc(m)}</b><small>${n}</small></button>`).join('');
+Promise.all([pedir('/api/visual/opciones'), fotosListas]).then(([o]) => {
+  $('manos').innerHTML = o.manos.map(([m, n]) => `<button class="mano" data-m="${esc(m)}" aria-pressed="false" aria-label="Mano ${esc(m)}, ${n} señas">${imgFam(m)}<b>${esc(m)}</b><small>${n}</small></button>`).join('');
   conteoZonas = Object.fromEntries(o.zonas);
   dibujarCuerpoSel();
 });
@@ -202,8 +207,8 @@ function marcasDe(md) {
 }
 function chipsMano(md, grande) {
   if (!md) return ''; const p = md.presencia;
-  return (p.cm_dominante || []).map(x => `<span class="chipmano dom" title="Mano principal">${esc(x)}</span>`).join('')
-    + (p.cm_base || []).map(x => `<span class="chipmano base" title="Mano de apoyo">${esc(x)}</span>`).join('');
+  return (p.cm_dominante || []).map(x => `<span class="chipmano dom" title="Mano principal">${imgFam(x)}${esc(x)}</span>`).join('')
+    + (p.cm_base || []).map(x => `<span class="chipmano base" title="Mano de apoyo">${imgFam(x)}${esc(x)}</span>`).join('');
 }
 function miniCuerpo(md) { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '30 0 140 270'); s.setAttribute('class', 'cuerpo mini'); s.setAttribute('aria-hidden', 'true'); dibujarCuerpo(s, marcasDe(md)); return s.outerHTML; }
 function medio(url, alt) { return /\.mp4$/.test(url) ? `<video src="${url}" muted loop autoplay playsinline aria-label="${esc(alt)}"></video>` : `<img src="${url}" alt="${esc(alt)}">`; }
@@ -233,7 +238,9 @@ const ICO = {
 async function ficha(id) {
   const s = await pedir('/api/senas/' + id);
   const md = s.metadatos, dic = s.diccionarios[0] || {}, df = dic.datos_fonologicos || {};
-  const pasos = md ? md.linea_temporal.map(t => `<span class="chipmano dom">${esc(t.cm_dominante || '—')}</span>${t.cm_base ? `<span class="chipmano base">${esc(t.cm_base)}</span>` : ''}`).join('<span class="flecha" aria-label="luego">➜</span>') : '';
+  const exactas = [...String(df.configuracion || '').matchAll(/(?<![\w.])([0-9A-Z]+(?:-[A-Z0-9]+)?)\.\s?(\d+)/g)].map(m => m[1] + '.' + m[2]).filter(c => FOTOS[c]);
+  const pasosExactos = exactas.map(c => `<span class="foto"><img src="manos/${FOTOS[c]}" alt="Configuración ${c}">${c}</span>`).join('<span class="flecha" aria-label="luego">➜</span>');
+  const pasos = pasosExactos || (md ? md.linea_temporal.map(t => `<span class="chipmano dom">${esc(t.cm_dominante || '—')}</span>${t.cm_base ? `<span class="chipmano base">${esc(t.cm_base)}</span>` : ''}`).join('<span class="flecha" aria-label="luego">➜</span>') : '');
   $('ficha').innerHTML = `
     <h2>${esc(s.glosa)}</h2>
     <div class="palabras" aria-label="Palabras en español">${s.palabras.map(p => `<span>${esc(p)}</span>`).join('')}</div>

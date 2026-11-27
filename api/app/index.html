@@ -3,96 +3,261 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LSM_DB · Consulta</title>
+<title>LSM_DB · Señas</title>
 <style>
-  :root { --bg:#f6f4ee; --card:#fffdf8; --ink:#14213d; --soft:#4a5568; --acc:#b4501a; --acc2:#f2a65a; --line:#e2ded3; }
+  :root { --bg:#f6f4ee; --card:#fffdf8; --ink:#14213d; --soft:#4a5568; --dom:#d4621f; --dom-bg:#fbe3cc; --base:#2f6a8a; --base-bg:#d6e8f1; --line:#d9d3c4; }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui, 'Segoe UI', Arial, sans-serif; }
-  header { background:var(--ink); color:#f6f4ee; padding:24px 32px; }
-  header h1 { margin:0; font-size:32px; } header p { margin:4px 0 0; color:#bfc8d9; }
-  .stats { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
-  .stat { background:#22325a; border-radius:12px; padding:8px 16px; } .stat b { color:var(--acc2); font-size:22px; }
-  main { display:grid; grid-template-columns:380px 1fr; gap:24px; padding:24px 32px; }
-  @media (max-width:900px){ main { grid-template-columns:1fr; padding:16px; } }
-  .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
-  h2 { font-size:18px; margin:0 0 10px; }
-  input, select, button { font:inherit; padding:9px 12px; border:1px solid var(--line); border-radius:8px; width:100%; margin-bottom:8px; background:#fff; }
-  button { background:var(--acc); color:#fff; border:none; cursor:pointer; font-weight:600; }
-  .tabs { display:flex; gap:6px; margin-bottom:12px; } .tabs button { background:#ece8dd; color:var(--ink); }
-  .tabs button.on { background:var(--ink); color:#fff; }
-  #lista { margin-top:12px; max-height:60vh; overflow:auto; }
-  .item { padding:10px 12px; border-radius:8px; cursor:pointer; border-bottom:1px solid var(--line); }
-  .item:hover, .item.on { background:#fbe3cc; } .item small { color:var(--soft); }
-  .vacio { color:var(--soft); }
-  .chip { display:inline-block; background:#ece8dd; border-radius:999px; padding:3px 12px; margin:2px; font-size:14px; }
-  dl { display:grid; grid-template-columns:180px 1fr; gap:6px 14px; } dt { font-weight:600; color:var(--acc); } dd { margin:0; }
-  .glosa { font-size:30px; font-weight:700; margin:0; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:19px/1.45 system-ui, 'Segoe UI', Arial, sans-serif; }
+  button { font:inherit; cursor:pointer; }
+  :focus-visible { outline:4px solid var(--dom); outline-offset:3px; }
+  header { background:var(--ink); color:#fff; padding:18px 28px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:30px; } header .stat { color:#f2a65a; font-weight:700; }
+  .modos { display:flex; gap:14px; padding:20px 28px 0; flex-wrap:wrap; }
+  .modo { flex:1 1 220px; display:flex; align-items:center; gap:14px; padding:16px 20px; border:3px solid var(--line); border-radius:18px; background:var(--card); text-align:left; }
+  .modo svg { width:54px; height:54px; flex:none; } .modo b { display:block; font-size:22px; } .modo span { color:var(--soft); font-size:16px; }
+  .modo.on { border-color:var(--ink); background:#fff; box-shadow:0 4px 0 var(--ink); }
+  main { padding:20px 28px 40px; }
+  .panel { background:var(--card); border:2px solid var(--line); border-radius:18px; padding:20px; margin-bottom:20px; }
+  .paso { display:flex; align-items:center; gap:10px; font-size:22px; font-weight:700; margin:0 0 12px; }
+  .paso i { font-style:normal; width:38px; height:38px; border-radius:50%; background:var(--ink); color:#fff; display:grid; place-items:center; }
+  .visual { display:grid; grid-template-columns:1fr 300px; gap:24px; }
+  @media (max-width:860px){ .visual { grid-template-columns:1fr; } main,.modos { padding-left:14px; padding-right:14px; } }
+  .manos { display:grid; grid-template-columns:repeat(auto-fill, minmax(86px,1fr)); gap:10px; }
+  .mano { aspect-ratio:1; border:3px solid var(--line); border-radius:16px; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px; }
+  .mano b { font-size:30px; line-height:1; } .mano small { font-size:14px; color:var(--soft); }
+  .mano.on { border-color:var(--dom); background:var(--dom-bg); }
+  .cuerpo { width:100%; max-width:300px; } .cuerpo .z { fill:#ece8dd; stroke:#b0ada4; stroke-width:1.5; cursor:pointer; }
+  .cuerpo .z:hover { fill:#f6d5b8; } .cuerpo .z.on { fill:var(--dom); }
+  .cuerpo .z.dom { fill:var(--dom); } .cuerpo .z.base { fill:var(--base); } .cuerpo .z.dom.base { fill:url(#ambas); }
+  .cuantas { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .cuantas button { flex:1; padding:10px; border:3px solid var(--line); border-radius:14px; background:#fff; font-size:18px; }
+  .cuantas button.on { border-color:var(--ink); background:var(--ink); color:#fff; }
+  .elegido { margin-top:10px; font-size:18px; color:var(--soft); min-height:28px; }
+  .buscar { display:flex; gap:10px; } .buscar input { flex:1; font:inherit; font-size:24px; padding:14px 18px; border:3px solid var(--line); border-radius:14px; }
+  .btn { padding:12px 22px; border:none; border-radius:14px; background:var(--dom); color:#fff; font-weight:700; }
+  .btn.sec { background:#ece8dd; color:var(--ink); }
+  .resultados { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:14px; }
+  .tarjeta { border:3px solid var(--line); border-radius:18px; background:#fff; padding:12px; text-align:left; display:flex; flex-direction:column; gap:8px; }
+  .tarjeta:hover { border-color:var(--ink); }
+  .media { height:150px; border-radius:12px; background:var(--bg); display:flex; align-items:center; justify-content:center; gap:12px; overflow:hidden; }
+  .media img, .media video { width:100%; height:100%; object-fit:contain; background:#fff; }
+  .media .mini { width:70px; height:120px; }
+  .chipmano { display:inline-flex; align-items:center; justify-content:center; min-width:52px; height:52px; padding:0 8px; border-radius:12px; font-size:24px; font-weight:800; border:3px solid; }
+  .chipmano.dom { border-color:var(--dom); background:var(--dom-bg); } .chipmano.base { border-color:var(--base); background:var(--base-bg); border-style:dashed; }
+  .tarjeta .g { font-size:22px; font-weight:800; } .tarjeta .s { font-size:16px; color:var(--soft); }
+  .vacio { color:var(--soft); font-size:20px; text-align:center; padding:30px; }
+  .leyenda { display:flex; gap:18px; flex-wrap:wrap; font-size:16px; color:var(--soft); margin-bottom:12px; }
+  .leyenda span { display:flex; align-items:center; gap:6px; } .leyenda em { width:22px; height:22px; border-radius:6px; display:inline-block; }
+  dialog { border:none; border-radius:22px; padding:0; width:min(1000px, 96vw); max-height:94vh; }
+  dialog::backdrop { background:rgba(20,33,61,.6); }
+  .ficha { padding:24px; } .ficha h2 { font-size:44px; margin:0; letter-spacing:1px; }
+  .fgrid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:16px; } @media (max-width:760px){ .fgrid { grid-template-columns:1fr; } }
+  .bloque { background:var(--bg); border-radius:16px; padding:16px; }
+  .bloque h3 { margin:0 0 10px; font-size:20px; display:flex; align-items:center; gap:8px; } .bloque h3 svg { width:28px; height:28px; }
+  .secuencia { display:flex; align-items:center; gap:10px; flex-wrap:wrap; } .flecha { font-size:30px; color:var(--soft); }
+  .fila { display:flex; align-items:center; gap:10px; margin:6px 0; } .fila .et { font-size:16px; color:var(--soft); width:150px; }
+  .palabras span { display:inline-block; background:#fff; border:2px solid var(--line); border-radius:999px; padding:4px 14px; margin:3px; font-size:20px; font-weight:600; }
+  .texto dt { font-weight:700; color:var(--dom); margin-top:8px; } .texto dd { margin:0; }
+  .cerrar { position:sticky; top:0; float:right; margin:12px; font-size:22px; padding:8px 18px; }
+  .ayuda { font-size:17px; color:var(--soft); margin:6px 0 0; }
 </style>
 </head>
 <body>
 <header>
-  <h1>LSM_DB · Consulta de señas</h1>
-  <p>PostgreSQL → API → esta app. Diccionario de Lengua de Señas Mexicana.</p>
-  <div class="stats" id="stats"><span class="stat">Conectando con la API…</span></div>
+  <h1>✋ Señas de LSM</h1>
+  <div id="stats" aria-live="polite">Conectando…</div>
 </header>
+
+<nav class="modos" aria-label="Formas de buscar">
+  <button class="modo on" data-modo="visual" aria-pressed="true">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 58V30l-6-10a4 4 0 0 1 7-4l5 8V10a4 4 0 0 1 8 0v14V6a4 4 0 0 1 8 0v18-14a4 4 0 0 1 8 0v26c0 12-6 22-16 22H28" fill="#fbe3cc" stroke="#14213d" stroke-width="3" stroke-linejoin="round"/></svg>
+    <div><b>Buscar con dibujos</b><span>Elige la mano y el lugar del cuerpo</span></div>
+  </button>
+  <button class="modo" data-modo="palabra" aria-pressed="false">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="14" width="56" height="36" rx="8" fill="#d6e8f1" stroke="#14213d" stroke-width="3"/><text x="32" y="41" font-size="22" font-weight="800" text-anchor="middle" fill="#14213d">Aa</text></svg>
+    <div><b>Buscar con palabra</b><span>Escribe en español</span></div>
+  </button>
+</nav>
+
 <main>
-  <section class="panel">
-    <div class="tabs"><button id="tPal" class="on">Por palabra</button><button id="tFon">Por forma</button></div>
-    <form id="fPal">
-      <input id="q" placeholder="Ej.: casa, coche, abandonar" autofocus>
-      <button>Buscar</button>
-    </form>
-    <form id="fFon" hidden>
-      <input id="conf" placeholder="Configuración (ej.: B-P, A.1)">
-      <input id="ubi" placeholder="Ubicación (ej.: pecho, frente)">
-      <input id="mov" placeholder="Movimiento (ej.: arco, círculo)">
-      <select id="tipo"><option value="">Cualquier tipo de seña</option></select>
-      <button>Filtrar</button>
-    </form>
-    <div id="lista"><p class="vacio">Escribe una palabra para empezar.</p></div>
+  <section id="vVisual">
+    <div class="panel visual">
+      <div>
+        <p class="paso"><i>1</i> ¿Qué forma tiene la mano?</p>
+        <div class="manos" id="manos" role="group" aria-label="Formas de la mano"></div>
+        <p class="ayuda">Cada forma lleva la letra o el número del alfabeto manual que se le parece.</p>
+      </div>
+      <div>
+        <p class="paso"><i>2</i> ¿Dónde se hace?</p>
+        <svg class="cuerpo" id="cuerpo" viewBox="0 0 200 400" role="group" aria-label="Lugares del cuerpo"></svg>
+        <p class="paso" style="margin-top:12px"><i>3</i> ¿Cuántas manos?</p>
+        <div class="cuantas">
+          <button data-m="" class="on">Cualquiera</button>
+          <button data-m="false">✋ Una</button>
+          <button data-m="true">🤲 Dos</button>
+        </div>
+      </div>
+      <div style="grid-column:1/-1; display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+        <div class="elegido" id="elegido" aria-live="polite"></div>
+        <button class="btn sec" id="limpiar">Borrar elección</button>
+      </div>
+    </div>
   </section>
-  <section class="panel" id="ficha"><p class="vacio">Elige una seña de la lista para ver su ficha.</p></section>
+
+  <section id="vPalabra" hidden>
+    <div class="panel">
+      <form class="buscar" id="fPal"><input id="q" placeholder="Ej.: casa, coche, abandonar" aria-label="Palabra en español"><button class="btn">Buscar</button></form>
+    </div>
+  </section>
+
+  <div class="leyenda" aria-hidden="true">
+    <span><em style="background:var(--dom)"></em> Mano principal</span>
+    <span><em style="background:var(--base); border:2px dashed #14213d"></em> Mano de apoyo</span>
+  </div>
+  <section class="resultados" id="resultados" aria-live="polite"><p class="vacio" style="grid-column:1/-1">Elige una forma de mano o un lugar del cuerpo 👆</p></section>
 </main>
+
+<dialog id="dlg" aria-label="Ficha de la seña"><button class="btn sec cerrar" onclick="dlg.close()" aria-label="Cerrar">✕</button><div class="ficha" id="ficha"></div></dialog>
+
 <script>
-const API = location.origin.startsWith('http') ? '' : 'http://localhost:8000';
+const API = location.protocol.startsWith('http') ? '' : 'http://localhost:8000';
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const pedir = async ruta => { const r = await fetch(API + ruta); if (!r.ok) throw new Error((await r.json()).detail || r.status); return r.json(); };
+const pedir = async r => { const x = await fetch(API + r); if (!x.ok) throw new Error(x.status); return x.json(); };
 
-pedir('/api/estadisticas').then(s => {
-  $('stats').innerHTML = Object.entries(s).map(([k,v]) => `<span class="stat"><b>${v.toLocaleString('es-MX')}</b> ${({senas:'señas'})[k] || k}</span>`).join('');
-}).catch(() => $('stats').innerHTML = '<span class="stat">⚠ No hay conexión con la API o con PostgreSQL</span>');
-pedir('/api/tipos').then(ts => ts.forEach(t => $('tipo').insertAdjacentHTML('beforeend', `<option value="${esc(t.tipo)}">${esc(t.tipo)} (${t.senas})</option>`)));
+// Zonas del cuerpo dibujadas (vista de frente). [nombre, figura SVG]
+const ZONAS = [
+  ['Cabeza','<path d="M70 52 Q70 8 100 8 Q130 8 130 52 Z"/>'],
+  ['Frente','<rect x="76" y="34" width="48" height="14" rx="5"/>'],
+  ['Sien','<rect x="66" y="44" width="10" height="16" rx="4"/><rect x="124" y="44" width="10" height="16" rx="4"/>'],
+  ['Ceja','<rect x="80" y="49" width="16" height="4" rx="2"/><rect x="104" y="49" width="16" height="4" rx="2"/>'],
+  ['Ojo','<ellipse cx="88" cy="58" rx="7" ry="4"/><ellipse cx="112" cy="58" rx="7" ry="4"/>'],
+  ['Oreja','<ellipse cx="66" cy="66" rx="5" ry="10"/><ellipse cx="134" cy="66" rx="5" ry="10"/>'],
+  ['Nariz','<path d="M100 60 L94 74 L106 74 Z"/>'],
+  ['Mejilla','<circle cx="83" cy="74" r="7"/><circle cx="117" cy="74" r="7"/>'],
+  ['Cara','<rect x="70" y="62" width="4" height="4" opacity="0"/>'],
+  ['Boca','<rect x="90" y="80" width="20" height="7" rx="3"/>'],
+  ['Barbilla','<path d="M86 90 Q100 102 114 90 Z"/>'],
+  ['Cuello','<rect x="88" y="100" width="24" height="18"/>'],
+  ['Hombro','<path d="M50 120 Q60 116 76 118 L76 134 L50 138 Z"/><path d="M150 120 Q140 116 124 118 L124 134 L150 138 Z"/>'],
+  ['Pecho','<rect x="62" y="122" width="76" height="46" rx="10"/>'],
+  ['Plexo','<rect x="88" y="168" width="24" height="14" rx="4"/>'],
+  ['Abdomen','<rect x="66" y="182" width="68" height="32" rx="8"/>'],
+  ['Cintura','<rect x="64" y="214" width="72" height="16" rx="6"/>'],
+  ['Cadera','<rect x="62" y="230" width="76" height="22" rx="8"/>'],
+  ['Espalda','<rect x="0" y="0" width="1" height="1" opacity="0"/>'],
+  ['Brazo','<rect x="34" y="138" width="16" height="70" rx="8"/><rect x="150" y="138" width="16" height="70" rx="8"/>'],
+  ['Muñeca','<rect x="30" y="226" width="18" height="10" rx="4"/><rect x="152" y="226" width="18" height="10" rx="4"/>'],
+  ['Mano','<ellipse cx="38" cy="250" rx="11" ry="14"/><ellipse cx="162" cy="250" rx="11" ry="14"/>'],
+];
+const fondo = '<defs><pattern id="ambas" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="8" fill="#d4621f"/><rect x="4" width="4" height="8" fill="#2f6a8a"/></pattern></defs>'
+  + '<g fill="#e7e1d3" stroke="#b0ada4" stroke-width="1.5"><ellipse cx="100" cy="62" rx="34" ry="42"/><path d="M50 120 Q100 106 150 120 L166 230 L150 232 L140 150 L140 252 L60 252 L60 150 L50 232 L34 230 Z"/><path d="M62 252 L70 392 L96 392 L100 270 L104 392 L130 392 L138 252 Z"/></g>';
+function dibujarCuerpo(svg, marca = {}, clic = false) {
+  svg.innerHTML = fondo + ZONAS.map(([n, f]) => {
+    const cl = ['z', marca[n] || ''].join(' ').trim();
+    return `<g class="${cl}" data-z="${n}" ${clic ? `tabindex="0" role="button" aria-label="${n}"` : ''}><title>${n}</title>${f}</g>`;
+  }).join('');
+}
 
-function pestaña(pal) { $('fPal').hidden = !pal; $('fFon').hidden = pal; $('tPal').classList.toggle('on', pal); $('tFon').classList.toggle('on', !pal); }
-$('tPal').onclick = () => pestaña(true); $('tFon').onclick = () => pestaña(false);
+const est = {mano:'', zona:'', dos:''};
+let conteoZonas = {};
+
+pedir('/api/estadisticas').then(s => $('stats').innerHTML = `<span class="stat">${s.senas.toLocaleString('es-MX')}</span> señas del diccionario`)
+  .catch(() => $('stats').textContent = '⚠ Sin conexión con la base de datos');
+
+pedir('/api/visual/opciones').then(o => {
+  $('manos').innerHTML = o.manos.map(([m, n]) => `<button class="mano" data-m="${esc(m)}" aria-pressed="false" aria-label="Mano ${esc(m)}, ${n} señas"><b>${esc(m)}</b><small>${n}</small></button>`).join('');
+  conteoZonas = Object.fromEntries(o.zonas);
+  dibujarCuerpoSel();
+});
+
+function dibujarCuerpoSel() { dibujarCuerpo($('cuerpo'), est.zona ? {[est.zona]: 'on'} : {}, true); }
+
+$('manos').onclick = e => { const b = e.target.closest('.mano'); if (!b) return;
+  est.mano = est.mano === b.dataset.m ? '' : b.dataset.m;
+  document.querySelectorAll('.mano').forEach(x => { x.classList.toggle('on', x.dataset.m === est.mano); x.setAttribute('aria-pressed', x.dataset.m === est.mano); });
+  buscarVisual(); };
+const elegirZona = e => { const g = e.target.closest('[data-z]'); if (!g) return; est.zona = est.zona === g.dataset.z ? '' : g.dataset.z; dibujarCuerpoSel(); buscarVisual(); };
+$('cuerpo').onclick = elegirZona; $('cuerpo').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); elegirZona(e); } };
+document.querySelectorAll('.cuantas button').forEach(b => b.onclick = () => {
+  est.dos = b.dataset.m; document.querySelectorAll('.cuantas button').forEach(x => x.classList.toggle('on', x === b)); buscarVisual(); });
+$('limpiar').onclick = () => { est.mano = est.zona = est.dos = ''; document.querySelectorAll('.mano').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('.cuantas button').forEach((x, i) => x.classList.toggle('on', i === 0)); dibujarCuerpoSel(); buscarVisual(); };
+
+function buscarVisual() {
+  const partes = [est.mano && `mano <b>${esc(est.mano)}</b>`, est.zona && `en <b>${esc(est.zona)}</b>`, est.dos && (est.dos === 'true' ? '🤲 dos manos' : '✋ una mano')].filter(Boolean);
+  $('elegido').innerHTML = partes.length ? 'Buscando: ' + partes.join(' · ') : '';
+  if (!est.mano && !est.zona) { $('resultados').innerHTML = '<p class="vacio" style="grid-column:1/-1">Elige una forma de mano o un lugar del cuerpo 👆</p>'; return; }
+  const p = new URLSearchParams({mano: est.mano, zona: est.zona}); if (est.dos) p.set('dos_manos', est.dos);
+  pedir('/api/visual/filtrar?' + p).then(mostrar);
+}
+
+function marcasDe(md) {
+  const m = {}; if (!md) return m; const p = md.presencia;
+  (p.ubicacion_dominante || []).forEach(z => m[z] = 'dom');
+  (p.ubicacion_base || []).forEach(z => m[z] = m[z] === 'dom' ? 'dom base' : 'base');
+  return m;
+}
+function chipsMano(md, grande) {
+  if (!md) return ''; const p = md.presencia;
+  return (p.cm_dominante || []).map(x => `<span class="chipmano dom" title="Mano principal">${esc(x)}</span>`).join('')
+    + (p.cm_base || []).map(x => `<span class="chipmano base" title="Mano de apoyo">${esc(x)}</span>`).join('');
+}
+function miniCuerpo(md) { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '30 0 140 270'); s.setAttribute('class', 'cuerpo mini'); s.setAttribute('aria-hidden', 'true'); dibujarCuerpo(s, marcasDe(md)); return s.outerHTML; }
+function medio(url, alt) { return /\.mp4$/.test(url) ? `<video src="${url}" muted loop autoplay playsinline aria-label="${esc(alt)}"></video>` : `<img src="${url}" alt="${esc(alt)}">`; }
 
 function mostrar(lista) {
-  $('lista').innerHTML = lista.length ? `<p class="vacio">${lista.length} resultado(s)</p>` + lista.map(s =>
-    `<div class="item" data-id="${s.id_sena}"><b>${esc(s.glosa)}</b> <small>· ${esc(s.codigo)} · ${esc(s.tipo)}</small><br><small>${esc(s.significado)}</small></div>`).join('')
-    : '<p class="vacio">Sin resultados.</p>';
-  document.querySelectorAll('.item').forEach(el => el.onclick = () => { document.querySelectorAll('.item').forEach(x => x.classList.remove('on')); el.classList.add('on'); ficha(el.dataset.id); });
+  $('resultados').innerHTML = lista.length ? lista.map(s => `
+    <button class="tarjeta" data-id="${s.id_sena}" aria-label="Seña ${esc(s.glosa)}">
+      <div class="media">${s.imagen ? medio(s.imagen, s.glosa) : `<div style="display:flex;flex-direction:column;gap:6px">${chipsMano(s.metadatos)}</div>${miniCuerpo(s.metadatos)}`}</div>
+      <span class="g">${esc(s.glosa)}</span><span class="s">${esc(s.significado)}</span>
+    </button>`).join('') : '<p class="vacio" style="grid-column:1/-1">No hay señas con esa combinación. Prueba quitando algo 🔄</p>';
 }
-const error = e => $('lista').innerHTML = `<p class="vacio">⚠ ${esc(e.message)}</p>`;
+$('resultados').onclick = e => { const t = e.target.closest('.tarjeta'); if (t) ficha(t.dataset.id); };
 
-$('fPal').onsubmit = e => { e.preventDefault(); const q = $('q').value.trim(); if (q) pedir('/api/buscar?q=' + encodeURIComponent(q)).then(mostrar).catch(error); };
-$('fFon').onsubmit = e => { e.preventDefault();
-  const p = new URLSearchParams({configuracion:$('conf').value, ubicacion:$('ubi').value, movimiento:$('mov').value, tipo:$('tipo').value});
-  pedir('/api/filtrar?' + p).then(mostrar).catch(error); };
+document.querySelectorAll('.modo').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.modo').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
+  $('vVisual').hidden = b.dataset.modo !== 'visual'; $('vPalabra').hidden = b.dataset.modo !== 'palabra';
+  $('resultados').innerHTML = ''; if (b.dataset.modo === 'palabra') $('q').focus(); else buscarVisual(); });
+$('fPal').onsubmit = e => { e.preventDefault(); const q = $('q').value.trim(); if (q) pedir('/api/buscar?q=' + encodeURIComponent(q)).then(mostrar); };
 
-const NOMBRES = {codigo:'Código', significado:'Significado', tipo_sena:'Tipo de seña', configuracion:'Configuración', orientacion:'Orientación',
-  ubicacion:'Ubicación', movimiento:'Movimiento', rasgos_no_manuales:'Rasgos no manuales', representacion:'Representación',
-  definicion:'Definición', nota_cultural:'Nota cultural', nota:'Nota', pagina:'Página'};
+const ICO = {
+  mano: '<svg viewBox="0 0 64 64"><path d="M20 58V30l-6-10a4 4 0 0 1 7-4l5 8V10a4 4 0 0 1 8 0v14V6a4 4 0 0 1 8 0v18-14a4 4 0 0 1 8 0v26c0 12-6 22-16 22H28" fill="#fbe3cc" stroke="#14213d" stroke-width="4"/></svg>',
+  lugar: '<svg viewBox="0 0 64 64"><circle cx="32" cy="14" r="9" fill="#d6e8f1" stroke="#14213d" stroke-width="4"/><path d="M14 60V34q0-10 18-10t18 10v26" fill="#d6e8f1" stroke="#14213d" stroke-width="4"/></svg>',
+  mov: '<svg viewBox="0 0 64 64"><path d="M10 44 Q32 4 54 30" fill="none" stroke="#d4621f" stroke-width="6"/><path d="M44 26 L56 32 L52 18" fill="none" stroke="#d4621f" stroke-width="6"/></svg>',
+  libro: '<svg viewBox="0 0 64 64"><path d="M8 12h20q4 0 4 4v38q0-4-4-4H8zM56 12H36q-4 0-4 4v38q0-4 4-4h20z" fill="#fff" stroke="#14213d" stroke-width="4"/></svg>',
+};
 
 async function ficha(id) {
   const s = await pedir('/api/senas/' + id);
+  const md = s.metadatos, dic = s.diccionarios[0] || {}, df = dic.datos_fonologicos || {};
+  const pasos = md ? md.linea_temporal.map(t => `<span class="chipmano dom">${esc(t.cm_dominante || '—')}</span>${t.cm_base ? `<span class="chipmano base">${esc(t.cm_base)}</span>` : ''}`).join('<span class="flecha" aria-label="luego">➜</span>') : '';
   $('ficha').innerHTML = `
-    <p class="glosa">${esc(s.glosa)}</p><p class="vacio">${esc(s.codigo)} · ${esc(s.significado)}</p>
-    <h2>Palabras en español</h2><div>${s.palabras.map(p => `<span class="chip">${esc(p)}</span>`).join('')}</div>
-    <h2 style="margin-top:16px">Definición</h2>${s.definiciones.map(d => `<p>${esc(d.definicion)}<br><small class="vacio">${esc(d.autor)} · ${esc(d.lengua)}</small></p>`).join('') || '<p class="vacio">Sin definición.</p>'}
-    ${s.diccionarios.map(d => `<h2 style="margin-top:16px">Cómo se hace · ${esc(d.diccionario)}</h2>
-      <dl>${Object.entries(d.datos_fonologicos).filter(([k]) => !['codigo','significado','definicion'].includes(k))
-        .map(([k,v]) => `<dt>${NOMBRES[k] || esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`).join('')}`;
+    <h2>${esc(s.glosa)}</h2>
+    <div class="palabras" aria-label="Palabras en español">${s.palabras.map(p => `<span>${esc(p)}</span>`).join('')}</div>
+    <div class="fgrid">
+      <div class="bloque">
+        ${s.imagen ? `<div class="media" style="height:280px">${medio(s.imagen, s.glosa)}</div>` : ''}
+        <h3>${ICO.mano} Forma de la mano</h3>
+        <div class="secuencia">${pasos || '<span class="ayuda">Sin dato</span>'}</div>
+        <p class="ayuda">${md && md.linea_temporal.length > 1 ? 'La mano cambia de forma durante la seña.' : ''} ${md && md.presencia.cm_base ? 'Se hace con dos manos.' : 'Se hace con una mano.'}</p>
+        <h3 style="margin-top:14px">${ICO.mov} Movimiento</h3><p style="margin:0">${esc(df.movimiento || 'Sin dato')}</p>
+      </div>
+      <div class="bloque" style="text-align:center">
+        <h3 style="justify-content:center">${ICO.lugar} Dónde se hace</h3>
+        <svg class="cuerpo" viewBox="0 0 200 400" style="max-width:220px" aria-label="Lugar: ${esc(Object.keys(marcasDe(md)).join(', '))}" id="fCuerpo"></svg>
+        <p style="margin:4px 0">${esc(Object.keys(marcasDe(md)).join(' · '))}</p>
+      </div>
+    </div>
+    <div class="bloque" style="margin-top:20px">
+      <h3>${ICO.libro} Lo que dice el diccionario</h3>
+      <p style="margin-top:0">${esc((s.definiciones[0] || {}).definicion || '')}</p>
+      <dl class="texto">${[['configuracion','Configuración'],['ubicacion','Ubicación'],['orientacion','Orientación'],['rasgos_no_manuales','Cara y cuerpo'],['representacion','Qué imita'],['nota_cultural','Nota cultural']]
+        .filter(([k]) => df[k]).map(([k, n]) => `<dt>${n}</dt><dd>${esc(df[k])}</dd>`).join('')}</dl>
+      <p class="ayuda">${esc(dic.diccionario)}${df.pagina ? ', página ' + df.pagina : ''} · código ${esc(s.codigo)}</p>
+    </div>`;
+  dibujarCuerpo($('fCuerpo'), marcasDe(md));
+  $('dlg').showModal();
 }
 </script>
 </body>

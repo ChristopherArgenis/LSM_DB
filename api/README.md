@@ -20,6 +20,25 @@ En DBeaver (ya conectado) ejecuta esto y usa la contraseña nueva en `.env` y en
 
     ALTER USER postgres PASSWORD 'nueva_contraseña';
 
+## Cómo se usa la app
+
+La app está pensada para dos públicos: quien lee español y la comunidad sorda usuaria de LSM. Por eso se busca primero con dibujos y después con texto.
+
+**Buscar con dibujos** (pantalla inicial):
+1. Toca la forma de la mano. Cada forma lleva la letra o el número del alfabeto manual que se le parece.
+2. Toca en la silueta el lugar del cuerpo donde se hace la seña.
+3. Elige si es con una mano, con dos o cualquiera.
+
+Los resultados salen como tarjetas: la forma de la mano (naranja = mano principal; azul con borde punteado = mano de apoyo) y un cuerpo pequeño con el lugar marcado.
+
+**Buscar con palabra:** escribe una palabra en español, como «casa». No importan los acentos.
+
+**Ficha de la seña:** muestra la glosa en grande, sus palabras, la forma de la mano paso a paso (O ➜ 5 cuando cambia), el lugar en el cuerpo, el movimiento y, al final, el texto del diccionario.
+
+**Imágenes o videos:** guarda el archivo de cada seña en `api/imagenes/` con su código como nombre, por ejemplo `B-P 62.png` o `A-69.mp4`. La app lo muestra solo en la tarjeta y en la ficha.
+
+La búsqueda con dibujos usa `metadatos/metadatos.json`. Si regeneras METADATOS, reinicia la API.
+
 ## Rutas de la API
 
 | Ruta | Qué devuelve |
@@ -28,6 +47,8 @@ En DBeaver (ya conectado) ejecuta esto y usa la contraseña nueva en `.env` y en
 | `GET /api/buscar?q=casa` | Señas cuya palabra o glosa contiene el texto (sin importar acentos) |
 | `GET /api/filtrar?configuracion=B-P&ubicacion=pecho&movimiento=arco&tipo=SM` | Señas por su forma (al menos un filtro) |
 | `GET /api/tipos` | Tipos de seña y cuántas hay de cada uno |
+| `GET /api/visual/opciones` | Formas de mano y lugares del cuerpo, con cuántas señas hay de cada uno |
+| `GET /api/visual/filtrar?mano=O&zona=Frente&dos_manos=false` | Señas por mano, lugar y número de manos |
 | `GET /api/senas/{id}` | Ficha completa: glosa, palabras, definición y cómo se hace según cada diccionario |
 
 Documentación interactiva para probar cada ruta: http://localhost:8000/docs

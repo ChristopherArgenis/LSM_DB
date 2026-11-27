@@ -1,0 +1,2 @@
+Pon aquí la imagen o el video de cada seña con su código como nombre,
+por ejemplo "B-P 62.png" o "A-69.mp4". La app la muestra sola.

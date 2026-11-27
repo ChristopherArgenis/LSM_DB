@@ -76,7 +76,7 @@ def estadisticas():
 def buscar(q: str = Query(..., min_length=1, description="Palabra en español o glosa")):
     """Señas cuya palabra o glosa contiene el texto (sin importar acentos ni mayúsculas)."""
     patron = f"%{q}%"
-    return consulta(RESUMEN + f"""
+    filas = consulta(RESUMEN + f"""
         WHERE EXISTS (SELECT 1 FROM sena_palabra sp JOIN palabra p USING (id_palabra)
                        WHERE sp.id_sena = s.id_sena
                          AND {SIN_ACENTO.format('p.palabra')} LIKE {SIN_ACENTO.format('%s')})
@@ -84,6 +84,7 @@ def buscar(q: str = Query(..., min_length=1, description="Palabra en español o 
                        WHERE sg.id_sena = s.id_sena
                          AND {SIN_ACENTO.format('g.glosa')} LIKE {SIN_ACENTO.format('%s')})
         ORDER BY glosa LIMIT 100""", (patron, patron))
+    return [dict(f, imagen=imagen_de(f["codigo"]), metadatos=META.get(f["codigo"])) for f in filas]
 
 
 @app.get("/api/filtrar")
@@ -129,8 +130,60 @@ def sena(id_sena: int):
         """SELECT dc.nombre_completo AS diccionario, sd.datos_fonologicos
            FROM sena_diccionario sd JOIN diccionario dc USING (id_diccionario)
            WHERE sd.id_sena = %s""", (id_sena,))
+    ficha["metadatos"] = META.get(ficha["codigo"])
+    ficha["imagen"] = imagen_de(ficha["codigo"])
     return ficha
 
 
+# ---------- Búsqueda visual (usa metadatos/metadatos.json) ----------
+_META_PATH = AQUI.parent / "metadatos" / "metadatos.json"
+META = {}
+if _META_PATH.exists():
+    import json
+    META = {m["codigo"]: m["METADATOS"] for m in json.loads(_META_PATH.read_text(encoding="utf-8"))}
+
+IMAGENES = AQUI / "imagenes"   # opcional: imagenes/<codigo>.png (ej. "B-P 62.png")
+
+
+def imagen_de(codigo):
+    for ext in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4"):
+        if (IMAGENES / f"{codigo}{ext}").exists():
+            return f"/imagenes/{codigo}{ext}"
+    return None
+
+
+@app.get("/api/visual/opciones")
+def opciones_visuales():
+    """Formas de mano y zonas del cuerpo, con cuántas señas usan cada una."""
+    from collections import Counter
+    manos, zonas = Counter(), Counter()
+    for m in META.values():
+        p = m["presencia"]
+        manos.update(set(p.get("cm_dominante", []) + p.get("cm_base", [])))
+        zonas.update(set(p.get("ubicacion_dominante", []) + p.get("ubicacion_base", [])))
+    return {"manos": manos.most_common(), "zonas": zonas.most_common()}
+
+
+@app.get("/api/visual/filtrar")
+def filtrar_visual(mano: str = "", zona: str = "", dos_manos: bool | None = None):
+    """Señas por forma de la mano y lugar del cuerpo, elegidos con dibujos."""
+    codigos = []
+    for codigo, m in META.items():
+        p = m["presencia"]
+        if mano and mano not in p.get("cm_dominante", []) + p.get("cm_base", []):
+            continue
+        if zona and zona not in p.get("ubicacion_dominante", []) + p.get("ubicacion_base", []):
+            continue
+        if dos_manos is not None and dos_manos != ("cm_base" in p):
+            continue
+        codigos.append(codigo)
+    if not codigos:
+        return []
+    filas = consulta(RESUMEN + " WHERE sd.datos_fonologicos->>'codigo' = ANY(%s) ORDER BY glosa LIMIT 300", (codigos,))
+    return [dict(f, imagen=imagen_de(f["codigo"]), metadatos=META.get(f["codigo"])) for f in filas]
+
+
 # La app local (api/app/index.html) se sirve en http://localhost:8000/
+if IMAGENES.exists():
+    app.mount("/imagenes", StaticFiles(directory=IMAGENES), name="imagenes")
 app.mount("/", StaticFiles(directory=AQUI / "app", html=True), name="app")

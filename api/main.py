@@ -197,6 +197,17 @@ def filtrar_visual(mano: str = "", zona: str = "", dos_manos: bool | None = None
     return [dict(f, imagen=imagen_de(f["codigo"]), metadatos=META.get(f["codigo"])) for f in filas]
 
 
+@app.get("/api/imagenes/estado")
+def estado_imagenes():
+    """Cuántas señas tienen imagen en la carpeta imagenes/ y ejemplos de lo que no se emparejó."""
+    con = [c for c in META if imagen_de(c)]
+    usados = {_clave(c) for c in META}
+    sueltos = [r for k, r in INDICE_IMG.items() if k not in usados]
+    return {"carpeta": str(IMAGENES), "archivos": len(INDICE_IMG), "senas_con_imagen": len(con),
+            "senas_total": len(META), "ejemplos_sin_emparejar": sueltos[:10],
+            "ejemplos_codigos_sin_imagen": [c for c in META if not imagen_de(c)][:10]}
+
+
 # ---------- Búsqueda fonológica con METADATOS ----------
 CAMPOS_META = ("cm_dominante", "cm_base", "ubicacion_dominante", "ubicacion_base")
 

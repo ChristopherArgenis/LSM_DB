@@ -3,3 +3,4 @@ __pycache__/
 api/.env
 api/imagenes/*
 !api/imagenes/LEEME.txt
+conexion.txt

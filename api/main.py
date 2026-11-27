@@ -14,13 +14,13 @@ from fastapi.staticfiles import StaticFiles
 
 AQUI = Path(__file__).parent
 
-# Lee api/.env si existe (formato CLAVE=valor, una por línea)
-env = AQUI / ".env"
-if env.exists():
-    for linea in env.read_text(encoding="utf-8").splitlines():
-        if "=" in linea and not linea.strip().startswith("#"):
-            k, v = linea.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip())
+# Lee api/.env o api/conexion.txt si existe (formato CLAVE=valor, una por línea)
+for env in (AQUI / ".env", AQUI / "conexion.txt"):
+    if env.exists():
+        for linea in env.read_text(encoding="utf-8").splitlines():
+            if "=" in linea and not linea.strip().startswith("#"):
+                k, v = linea.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
 
 CONEXION = dict(
     host=os.getenv("PGHOST", "localhost"),
@@ -136,7 +136,7 @@ def sena(id_sena: int):
 
 
 # ---------- Búsqueda visual (usa metadatos/metadatos.json) ----------
-_META_PATH = AQUI.parent / "metadatos" / "metadatos.json"
+_META_PATH = next((p for p in (AQUI / "metadatos.json", AQUI.parent / "metadatos" / "metadatos.json") if p.exists()), AQUI / "metadatos.json")
 META = {}
 if _META_PATH.exists():
     import json

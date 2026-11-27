@@ -165,6 +165,8 @@ let conteoZonas = {};
 pedir('/api/estadisticas').then(s => $('stats').innerHTML = `<span class="stat">${s.senas.toLocaleString('es-MX')}</span> señas del diccionario`)
   .catch(() => $('stats').textContent = '⚠ Sin conexión con la base de datos');
 
+dibujarCuerpoSel();
+$('manos').innerHTML = '<p class="ayuda">Las formas de mano aparecen cuando la app se conecta con la base de datos.</p>';
 pedir('/api/visual/opciones').then(o => {
   $('manos').innerHTML = o.manos.map(([m, n]) => `<button class="mano" data-m="${esc(m)}" aria-pressed="false" aria-label="Mano ${esc(m)}, ${n} señas"><b>${esc(m)}</b><small>${n}</small></button>`).join('');
   conteoZonas = Object.fromEntries(o.zonas);

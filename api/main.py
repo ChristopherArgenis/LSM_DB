@@ -200,4 +200,5 @@ def filtrar_visual(mano: str = "", zona: str = "", dos_manos: bool | None = None
 # La app local (api/app/index.html) se sirve en http://localhost:8000/
 if IMAGENES.exists():
     app.mount("/imagenes", StaticFiles(directory=IMAGENES), name="imagenes")
-app.mount("/", StaticFiles(directory=AQUI / "app", html=True), name="app")
+if (AQUI / "app").exists():
+    app.mount("/", StaticFiles(directory=AQUI / "app", html=True), name="app")
